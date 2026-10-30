@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+next-env.d.ts
+supabase/.temp
+supabase/.branches
+.DS_Store
+test-results
+playwright-report
+private

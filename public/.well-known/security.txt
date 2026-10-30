@@ -1,0 +1,4 @@
+Contact: mailto:linekginfo@gmail.com
+Expires: 2027-10-26T00:00:00.000Z
+Preferred-Languages: ky, ru, en
+Canonical: https://edumaps.kg/.well-known/security.txt
