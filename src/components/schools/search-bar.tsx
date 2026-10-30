@@ -4,6 +4,7 @@ import type { Dictionary } from "@/lib/i18n/get-dictionary";
 import { tr } from "@/lib/i18n/localized";
 import type { CityData } from "@/lib/data/geo";
 import { Button } from "@/components/ui/button";
+import { SearchInput } from "./search-input";
 
 /** Plain GET form: works without JavaScript and produces shareable URLs. */
 export function SearchBar({ lang, dict, cities, defaultQuery = "", defaultCity = "" }: {
@@ -11,18 +12,17 @@ export function SearchBar({ lang, dict, cities, defaultQuery = "", defaultCity =
 }) {
   return (
     <form action={localizedPath(lang, "/schools")} method="get" role="search" className="flex w-full flex-col gap-2 rounded-card bg-white p-2 shadow-lift sm:flex-row sm:items-center">
-      <label className="relative flex-1">
-        <span className="sr-only">{dict.schools.searchPlaceholder}</span>
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-ink-400" />
-        <input
+      <div className="relative flex min-w-0 flex-1 items-center">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 z-10 size-5 -translate-y-1/2 text-ink-400" />
+        <SearchInput
           name="q"
-          type="search"
+          aria-label={dict.schools.searchPlaceholder}
           defaultValue={defaultQuery}
           maxLength={80}
           placeholder={dict.home.searchPlaceholder}
           className="h-12 w-full rounded-control border-0 bg-transparent pl-11 pr-3 text-body text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
-      </label>
+      </div>
       <div className="hidden h-8 w-px bg-ink-200 sm:block" />
       <label className="sm:w-52">
         <span className="sr-only">{dict.schools.city}</span>

@@ -38,6 +38,43 @@ test.describe("the page for schools", () => {
   });
 });
 
+test.describe("plans and advertising pages", () => {
+  test("the page for schools explains Basic and Pro without naming a price, and promises equal treatment", async ({ page }) => {
+    await page.goto("/en/for-schools");
+    await expect(page.getByRole("heading", { name: "Basic and Pro listings" })).toBeVisible();
+    const cards = page.locator("main h3");
+    await expect(cards.filter({ hasText: /^Basic$/ })).toBeVisible();
+    await expect(cards.filter({ hasText: /^Pro$/ })).toBeVisible();
+    await expect(page.getByText("Cover image, logo, 2 gallery photos and 1 video")).toBeVisible();
+    await expect(page.getByText("Up to 10 gallery photos and 5 videos")).toBeVisible();
+    await expect(page.getByText("Pro never changes grades, rankings or the order of search results")).toBeVisible();
+    expect(await page.locator("main").innerText()).not.toMatch(/\d+\s*(KGS|som|сом|\$|USD)/i);
+    await page.getByRole("link", { name: "Ask about Pro" }).click();
+    await expect(page).toHaveURL(/\/en\/contact\?topic=other/);
+  });
+
+  for (const [lang, title, cta] of [["en", "Advertise on EduMaps.kg", "Request an advertisement"], ["ru", "Реклама на EduMaps.kg", "Заказать рекламу"], ["kg", "EduMaps.kg сайтындагы жарнама", "Жарнама буюртма берүү"]] as const) {
+    test(`the advertising page exists in ${lang}, lists the four real placements and leads to the contact form`, async ({ page }) => {
+      await page.goto(`/${lang}/advertise`);
+      await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+      await expect(page.locator("main h3")).toHaveCount(4);
+      expect(await page.locator("main").innerText()).not.toMatch(/\d+\s*(KGS|som|сом|\$|USD)/i);
+      await page.getByRole("link", { name: cta }).click();
+      await expect(page).toHaveURL(new RegExp(`/${lang}/contact\\?topic=advertising`));
+      await expect(page.locator("#contact-topic")).toHaveValue("advertising");
+    });
+  }
+
+  test("the footer links to it and the sitemap lists both pages", async ({ page, request }) => {
+    await page.goto("/en");
+    await page.getByRole("contentinfo").getByRole("link", { name: "Advertising" }).click();
+    await expect(page).toHaveURL(/\/en\/advertise/);
+    const xml = await (await request.get("/sitemap.xml")).text();
+    expect(xml).toContain("/en/advertise");
+    expect(xml).toContain("/kg/for-schools");
+  });
+});
+
 test.describe.serial("the school outreach list", () => {
   test("administrators get ready messages for real schools, never for sample ones", async ({ page }) => {
     await login(page, ADMIN, "/admin/outreach");

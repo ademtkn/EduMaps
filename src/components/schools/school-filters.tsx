@@ -9,7 +9,8 @@ import type { CityData } from "@/lib/data/geo";
 import { useDict, useLang } from "@/components/i18n-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Input, Label, Select } from "@/components/ui/form";
+import { control, Input, Label, Select } from "@/components/ui/form";
+import { SearchInput } from "./search-input";
 
 const TYPES = ["public", "private", "international", "specialized"] as const;
 
@@ -71,7 +72,7 @@ function FilterForm({ cities, hideCity, showDistricts, onDone, formId }: { citie
       }} className="space-y-6">
       <div>
         <Label htmlFor={`${uid}-q`}>{dict.schools.searchPlaceholder}</Label>
-        <Input id={`${uid}-q`} name="q" type="search" maxLength={80} defaultValue={params.get("q") ?? ""} onChange={(e) => e.stopPropagation()} />
+        <SearchInput id={`${uid}-q`} name="q" maxLength={80} defaultValue={params.get("q") ?? ""} onChange={(e) => e.stopPropagation()} className={`${control} h-11`} />
       </div>
 
       {!hideCity ? (

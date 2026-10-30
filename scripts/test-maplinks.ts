@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { cleanLink, distanceMeters, parseMapLink, serviceOf } from "../src/lib/map-links";
+import { parseNear } from "../src/lib/geo";
 import { resolveMapLink } from "../src/lib/map-links-resolve";
 
 let passed = 0;
@@ -74,6 +75,16 @@ async function main() {
     const d = distanceMeters({ lat: 42.862851, lng: 74.617321 }, { lat: 42.863851, lng: 74.617321 });
     assert.ok(d > 100 && d < 120, String(d));
     assert.equal(Math.round(distanceMeters({ lat: 42.8, lng: 74.6 }, { lat: 42.8, lng: 74.6 })), 0);
+  });
+
+  console.log("Visitor position");
+  await check("a position inside Kyrgyzstan is rounded to about a kilometre", () => {
+    assert.deepEqual(parseNear("42.87461,74.56983"), { lat: 42.87, lng: 74.57 });
+    assert.deepEqual(parseNear("42.87,74.57"), { lat: 42.87, lng: 74.57 });
+  });
+  await check("anything else is ignored", () => {
+    for (const v of ["10,10", "48.85,2.35", "abc", "42.87", "42.87,74.57,1", "<script>", "", "42.87;74.57", "NaN,NaN"]) assert.equal(parseNear(v), undefined, v);
+    assert.equal(parseNear(null), undefined);
   });
 
   console.log("Following short links");

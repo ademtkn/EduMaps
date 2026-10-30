@@ -90,7 +90,8 @@
     "guidelines": "Community Guidelines",
     "contact": "Contact",
     "legalLabel": "Legal",
-    "forSchools": "For schools"
+    "forSchools": "For schools",
+    "advertise": "Advertising"
   },
   "home": {
     "heroTitle": "Choose the right school for your child — with confidence",
@@ -160,7 +161,9 @@
       "resume": "Resume",
       "shuffle": "Show other schools",
       "paused": "Paused"
-    }
+    },
+    "suggestSchools": "Schools",
+    "suggestCities": "Cities"
   },
   "schools": {
     "title": "Schools in Kyrgyzstan",
@@ -246,7 +249,16 @@
       "oktyabrsky": "Oktyabrsky",
       "pervomaisky": "Pervomaisky",
       "sverdlovsky": "Sverdlovsky"
-    }
+    },
+    "nearMe": "Schools near me",
+    "nearActive": "Sorted by distance from your location",
+    "nearClear": "Clear",
+    "nearDenied": "Your browser did not share your location. Allow it for this site to see the nearest schools.",
+    "nearUnavailable": "This browser cannot find your location.",
+    "nearNoCoords": "Schools without a map location are listed last.",
+    "sortNearest": "Nearest first",
+    "kmAway": "{km} km away",
+    "metersAway": "{m} m away"
   },
   "school": {
     "overview": "Overview",
@@ -853,6 +865,77 @@
     "removeText": "Write to us and we will remove your school’s page.",
     "contactTitle": "Contact us",
     "contactText": "Write to us by email or WhatsApp, or use the contact form.",
-    "contactCta": "Open the contact form"
+    "contactCta": "Open the contact form",
+    "plansTitle": "Basic and Pro listings",
+    "plansIntro": "Every school page has the same information and the same place in search and comparison. The two listings differ only in how many photos and videos the school can show.",
+    "basicName": "Basic",
+    "basicPrice": "Free",
+    "basicItems": [
+      "Address, contacts, school hours and map links",
+      "Tuition and what it covers, languages, programmes and facilities",
+      "Cover image, logo, 2 gallery photos and 1 video",
+      "On the map, in comparison and in reviews"
+    ],
+    "proName": "Pro",
+    "proPrice": "Agreed with the school",
+    "proItems": [
+      "Everything in Basic",
+      "Up to 10 gallery photos and 5 videos",
+      "More room to show classrooms, sports, events and the school day"
+    ],
+    "plansFair": "Pro never changes grades, rankings or the order of search results, and the page does not show which listing a school has.",
+    "plansCta": "Ask about Pro"
+  },
+  "advertise": {
+    "advTitle": "Advertise on EduMaps.kg",
+    "advIntro": "Language schools, summer camps, robotics centres, education companies and event organisers can reach parents who are choosing a school. Every advertisement is clearly labelled and kept apart from school information.",
+    "advWhoTitle": "Who can advertise",
+    "advWho": [
+      "Language schools and tutoring centres",
+      "Summer camps and holiday programmes",
+      "Robotics, coding and hobby clubs",
+      "Education companies, publishers and software for schools",
+      "Education events, fairs and open days"
+    ],
+    "advFormatsTitle": "Where advertisements appear",
+    "advFormats": [
+      {
+        "name": "Sponsored card on the home page",
+        "text": "One card among the schools shown in “Discover schools”, in a random place that changes with every visit."
+      },
+      {
+        "name": "Banner",
+        "text": "A wide banner on the home page and on the school directory."
+      },
+      {
+        "name": "Side card",
+        "text": "A card beside school pages, Education Hub articles and Community posts."
+      },
+      {
+        "name": "Featured card in the Education Hub",
+        "text": "A card inside the list of articles."
+      }
+    ],
+    "advRulesTitle": "Our rules",
+    "advRules": [
+      "Every advertisement says “Advertisement” and who is behind it.",
+      "Advertising never changes grades, rankings or search results, and schools cannot buy a better position.",
+      "Advertisements must be truthful. We do not accept promises of admission, exam results or guaranteed outcomes.",
+      "We choose advertisements that suit families and children, and we may refuse or remove any advertisement.",
+      "Advertisements are shown only in the languages you choose: Kyrgyz, Russian or English."
+    ],
+    "advSendTitle": "What we need from you",
+    "advSend": [
+      "Name of the organisation and a link to its website",
+      "The format you want and the dates",
+      "A headline (up to 120 characters), a short text (up to 300 characters) and a button text, in each language you want",
+      "An image and the web address the advertisement should open"
+    ],
+    "advReportTitle": "Results",
+    "advReport": "We count how many times each advertisement is shown and how many times it is pressed, and we send you the figures for your campaign.",
+    "advPriceTitle": "Prices",
+    "advPrice": "Prices depend on the format and the period. Write to us and we will send the price list.",
+    "advCta": "Request an advertisement",
+    "advCrumb": "Advertising"
   }
 }

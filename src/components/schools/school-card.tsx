@@ -2,6 +2,7 @@ import { Bus, Clock, GraduationCap, MapPin, Trophy } from "lucide-react";
 import Link from "next/link";
 import { localizedPath, type Lang } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/fmt";
+import { formatNumber } from "@/lib/i18n/format";
 import { feeLabels, formatFee, formatMonthlyEquivalent } from "@/lib/fees";
 import type { Dictionary } from "@/lib/i18n/get-dictionary";
 import { tr } from "@/lib/i18n/localized";
@@ -54,6 +55,11 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
         <div className="absolute right-3 top-3">
           <FavoriteButton kind="school" id={school.id} />
         </div>
+        {school.distance_km != null ? (
+          <span className="absolute bottom-3 right-3 rounded-md bg-white/95 px-2 py-0.5 text-caption font-semibold text-brand-800 shadow-sm">
+            {school.distance_km < 1 ? fmt(dict.schools.metersAway, { m: Math.max(50, Math.round(school.distance_km * 100) * 10) }) : fmt(dict.schools.kmAway, { km: formatNumber(school.distance_km, lang) })}
+          </span>
+        ) : null}
       </div>
 
       <div className="relative flex flex-1 flex-col px-5 pb-5 pt-9">

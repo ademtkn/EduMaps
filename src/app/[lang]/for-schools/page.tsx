@@ -1,4 +1,4 @@
-import { Camera, CircleCheck, ClipboardCheck, Scale, Trash2 } from "lucide-react";
+import { Camera, Check, CircleCheck, ClipboardCheck, Scale, Trash2 } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -47,6 +47,26 @@ export default async function ForSchoolsPage({ params }: Props) {
           <span className="mb-4 flex size-12 items-center justify-center rounded-xl bg-white/10"><CircleCheck className="size-6" /></span>
           <h2 className="text-h2 font-semibold text-white">{f.freeTitle}</h2>
           <p className="mt-3 text-body text-brand-100">{f.freeText}</p>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-h2 font-semibold">{f.plansTitle}</h2>
+          <p className="mb-5 text-body text-ink-700">{f.plansIntro}</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {([[f.basicName, f.basicPrice, f.basicItems], [f.proName, f.proPrice, f.proItems]] as const).map(([name, price, items]) => (
+              <Card key={name} className="h-full">
+                <CardBody>
+                  <h3 className="text-h3 font-semibold">{name}</h3>
+                  <p className="mt-1 text-small font-medium text-leaf-700">{price}</p>
+                  <ul className="mt-4 space-y-2.5">
+                    {items.map((item) => <li key={item} className="flex gap-2.5 text-small text-ink-700"><Check className="mt-0.5 size-4 shrink-0 text-leaf-600" aria-hidden />{item}</li>)}
+                  </ul>
+                </CardBody>
+              </Card>
+            ))}
+          </div>
+          <p className="mt-4 text-small text-ink-600">{f.plansFair}</p>
+          <Button asChild variant="outline" className="mt-4"><LLink href="/contact?topic=other">{f.plansCta}</LLink></Button>
         </section>
 
         <section>

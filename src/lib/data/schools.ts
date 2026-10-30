@@ -1,6 +1,7 @@
 import "server-only";
 import { createPublicClient } from "@/lib/supabase/public";
 import { BISHKEK_DISTRICTS } from "@/lib/constants";
+import { distanceMeters, type Coords } from "@/lib/geo";
 import type { Lang } from "@/lib/i18n/config";
 import type { MapSchool, ReviewData, SchoolCardData, SchoolDetail } from "./types";
 
@@ -9,7 +10,7 @@ const CARD_SELECT =
   "cities!inner(slug,name,provinces!inner(slug,name)),school_languages(language_code,is_primary)";
 
 export const PAGE_SIZE = 12;
-export const SCHOOL_SORTS = ["rating", "reviews", "name", "updated"] as const;
+export const SCHOOL_SORTS = ["rating", "reviews", "name", "updated", "nearest"] as const;
 export type SchoolSort = (typeof SCHOOL_SORTS)[number];
 
 export type SchoolFilters = {
@@ -18,6 +19,8 @@ export type SchoolFilters = {
   province?: string;
   /** One of BISHKEK_DISTRICTS; only meaningful together with the Bishkek city filter. */
   district?: string;
+  /** The visitor's rounded position: distances are added to the cards, and "nearest" sorts by them. */
+  near?: Coords;
   systems?: string[];
   languages?: string[];
   grade?: number;
@@ -56,7 +59,7 @@ export async function listSchools(filters: SchoolFilters): Promise<{ items: Scho
     if (allowedIds.length === 0) return { items: [], total: 0 };
   }
 
-  let query = db.from("schools").select(CARD_SELECT, { count: "exact" }).eq("status", "published");
+  let query = db.from("schools").select(filters.near ? `${CARD_SELECT},school_locations(lat,lng)` : CARD_SELECT, { count: "exact" }).eq("status", "published");
 
   if (allowedIds) query = query.in("id", allowedIds);
   if (filters.q) {
@@ -87,11 +90,27 @@ export async function listSchools(filters: SchoolFilters): Promise<{ items: Scho
     default:
       query = query.order("rating_avg", { ascending: false }).order("rating_count", { ascending: false });
   }
-  query = query.order("id").range((page - 1) * pageSize, page * pageSize - 1);
+  // Distance order needs every match (the database cannot sort by it), so the whole list is read and sliced here.
+  const nearest = Boolean(filters.near) && filters.sort === "nearest";
+  query = nearest ? query.order("id").range(0, 999) : query.order("id").range((page - 1) * pageSize, page * pageSize - 1);
 
   const { data, count, error } = await query;
   if (error) throw new Error(`listSchools failed: ${error.message}`);
-  return { items: (data ?? []) as unknown as SchoolCardData[], total: count ?? 0 };
+  let items = (data ?? []) as unknown as (SchoolCardData & { school_locations?: { lat: number | null; lng: number | null } | { lat: number | null; lng: number | null }[] | null })[];
+  const near = filters.near;
+  if (near) {
+    items = items.map(({ school_locations, ...school }) => {
+      const loc = Array.isArray(school_locations) ? school_locations[0] : school_locations;
+      const distance = loc && loc.lat != null && loc.lng != null ? distanceMeters(near, { lat: Number(loc.lat), lng: Number(loc.lng) }) / 1000 : null;
+      return { ...school, distance_km: distance === null ? null : Math.round(distance * 10) / 10 };
+    });
+    if (nearest) {
+      // schools without a map location go last, best rated first
+      items.sort((a, b) => (a.distance_km ?? Infinity) - (b.distance_km ?? Infinity) || b.rating_avg - a.rating_avg);
+      return { items: items.slice((page - 1) * pageSize, page * pageSize), total: items.length };
+    }
+  }
+  return { items, total: count ?? 0 };
 }
 
 export async function getSchoolBySlug(slug: string): Promise<SchoolDetail | null> {

@@ -39,6 +39,7 @@ export function SiteFooter({ lang, dict, cities }: { lang: Lang; dict: Dictionar
             <li><Link className={link} href={localizedPath(lang, "/education")}>{dict.nav.education}</Link></li>
             <li><Link className={link} href={localizedPath(lang, "/community")}>{dict.nav.community}</Link></li>
             <li><Link className={link} href={localizedPath(lang, "/for-schools")}>{dict.footer.forSchools}</Link></li>
+            <li><Link className={link} href={localizedPath(lang, "/advertise")}>{dict.footer.advertise}</Link></li>
             <li><Link className={link} href={localizedPath(lang, "/about")}>{dict.nav.about}</Link></li>
             <li><Link className={link} href={localizedPath(lang, "/contact")}>{dict.footer.contact}</Link></li>
           </ul>

@@ -13,6 +13,7 @@ import { LLink } from "@/components/ui/localized-link";
 import { Pagination } from "@/components/ui/pagination";
 import { SchoolCard } from "./school-card";
 import { SchoolFilters as FilterPanel } from "./school-filters";
+import { NearMe } from "./near-me";
 import { SortSelect } from "./sort-select";
 
 /** Filter sidebar + sorted, paginated result grid. Shared by /schools, city, province and education-system pages. */
@@ -51,7 +52,10 @@ export async function SchoolsBrowser({ lang, dict, basePath, searchParams, filte
           <p className="text-small font-medium text-ink-700" aria-live="polite">
             {total === 1 ? dict.schools.foundOne : fmt(dict.schools.found, { count: total })}
           </p>
-          <SortSelect current={filters.sort ?? "rating"} />
+          <div className="flex flex-wrap items-start gap-3">
+            <NearMe active={Boolean(filters.near)} />
+            <SortSelect current={filters.sort ?? "rating"} near={Boolean(filters.near)} />
+          </div>
         </div>
 
         {items.length === 0 ? (

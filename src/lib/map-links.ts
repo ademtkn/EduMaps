@@ -18,7 +18,8 @@ export const MAX_MAP_LINK = 500;
 const LAT = [39, 44] as const;
 const LNG = [69, 81] as const;
 
-export type Coords = { lat: number; lng: number };
+import type { Coords } from "./geo";
+export type { Coords } from "./geo";
 export type MapLinkResult =
   | { ok: true; url: string; coords: Coords | null; short: boolean }
   | { ok: false; error: string };
@@ -116,9 +117,4 @@ export function parseMapLink(service: MapService, raw: string): MapLinkResult {
   return { ok: true, url, short: kind.short, coords: kind.short ? null : coordsFromUrl(service, url) };
 }
 
-/** Distance between two points in metres (haversine). */
-export function distanceMeters(a: Coords, b: Coords): number {
-  const rad = (d: number) => (d * Math.PI) / 180;
-  const h = Math.sin(rad(b.lat - a.lat) / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(rad(b.lng - a.lng) / 2) ** 2;
-  return 2 * 6_371_000 * Math.asin(Math.min(1, Math.sqrt(h)));
-}
+export { distanceMeters } from "./geo";

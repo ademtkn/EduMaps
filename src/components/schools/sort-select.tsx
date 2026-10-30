@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useDict } from "@/components/i18n-provider";
 import { Select } from "@/components/ui/form";
 
-export function SortSelect({ current }: { current: string }) {
+export function SortSelect({ current, near = false }: { current: string; near?: boolean }) {
   const dict = useDict();
   const router = useRouter();
   const pathname = usePathname();
@@ -24,6 +24,7 @@ export function SortSelect({ current }: { current: string }) {
           router.push(`${pathname}?${next.toString()}`, { scroll: false });
         }}
       >
+        {near ? <option value="nearest">{dict.schools.sortNearest}</option> : null}
         <option value="rating">{dict.schools.sortRating}</option>
         <option value="reviews">{dict.schools.sortReviews}</option>
         <option value="name">{dict.schools.sortName}</option>

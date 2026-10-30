@@ -1,6 +1,7 @@
 import type { Lang } from "@/lib/i18n/config";
 import { SCHOOL_SORTS, type SchoolFilters, type SchoolSort } from "@/lib/data/schools";
 import { BISHKEK_DISTRICTS } from "@/lib/constants";
+import { parseNear } from "@/lib/geo";
 import { firstParam, toInt } from "@/lib/utils";
 
 export type SearchParams = Record<string, string | string[] | undefined>;
@@ -18,7 +19,10 @@ function many(value: string | string[] | undefined, allowed: { has: (v: string) 
 /** Turns raw URL search params into validated filters. Unknown values are dropped, never passed to the database. */
 export function parseSchoolSearch(sp: SearchParams, lang: Lang, locked: Partial<SchoolFilters> = {}): SchoolFilters {
   const sortRaw = firstParam(sp.sort);
-  const sort: SchoolSort = (SCHOOL_SORTS as readonly string[]).includes(sortRaw ?? "") ? (sortRaw as SchoolSort) : "rating";
+  const near = parseNear(firstParam(sp.near));
+  // "nearest" only makes sense with a position; with one and no other choice, nearest comes first
+  const chosen = (SCHOOL_SORTS as readonly string[]).includes(sortRaw ?? "") ? (sortRaw as SchoolSort) : undefined;
+  const sort: SchoolSort = chosen === "nearest" ? (near ? "nearest" : "rating") : (chosen ?? (near ? "nearest" : "rating"));
   const grade = toInt(firstParam(sp.grade));
   const tmin = toInt(firstParam(sp.tmin));
   const tmax = toInt(firstParam(sp.tmax));
@@ -34,6 +38,7 @@ export function parseSchoolSearch(sp: SearchParams, lang: Lang, locked: Partial<
     // Districts only exist for Bishkek; ignore a leftover value after the city changes.
     district: effectiveCity === "bishkek" && district && (BISHKEK_DISTRICTS as readonly string[]).includes(district) ? district : undefined,
     province: locked.province,
+    near,
     systems: locked.systems ?? many(sp.system, SYSTEMS),
     languages: many(sp.lang, LANGS),
     grade: grade !== undefined && grade >= 0 && grade <= 11 ? grade : undefined,
