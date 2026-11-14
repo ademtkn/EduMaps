@@ -77,6 +77,9 @@ async function main() {
   await service.from("reviews").delete().eq("school_id", school!.id).eq("user_id", member.id);
   await service.from("community_posts").delete().eq("user_id", member.id).like("title", "[verify]%");
 
+  const pinWrite = await member.client.from("school_locations").update({ lat: 42.87, lng: 74.6 }).eq("school_id", school!.id).select("school_id");
+  check("members cannot move a school on the map", (pinWrite.data ?? []).length === 0 || Boolean(pinWrite.error));
+
   const { data: ratingBefore } = await anon.from("schools").select("rating_count,rating_avg").eq("id", school!.id).single();
   const body = "We visited twice and spoke with several teachers; the lab equipment and the calm atmosphere impressed us a lot.";
   const created = await member.client

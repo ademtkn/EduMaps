@@ -82,6 +82,17 @@ items below stay on the shelf until that changes.
   the mobile page went from ~11 600 px to ~10 300 px.
 - Without a Mapbox token the map area now has a dotted map-like background instead of an empty pane.
 
+### 15 Nov 2026 — "Map pins" workbench
+
+- **Admin → Map pins** (`/admin/map-pins`) walks the published schools without coordinates in
+  batches of 80: paste the Google Maps / 2GIS share link (or type `lat, lng`), see the pin on an
+  embedded Google preview, press save, and it moves on. Short links are resolved server-side by the
+  existing `resolveMapLink`, and everything outside Kyrgyzstan is refused.
+- The action `saveSchoolPinAction` updates an existing `school_locations` row in place (the address
+  is kept); it only inserts a row with an empty address when the school has none.
+- The completeness view (migration 26) also exposes `address`, `google_maps_url` and `twogis_url`.
+- `npm run test:db` now proves a signed-in member cannot move a school on the map (125 checks).
+
 - All **34 selected institutions** are researched and imported: **33 published**, **Genius.kg Tokmok draft** by explicit owner instruction. An additional historical AIM Balykchy candidate is preserved as a draft, superseded by Birinchi Mugalim in the selected Issyk-Kul batch. Thus import-state has35 historical entries, not35 selected institutions.
 - **87 actual sourced image assets** are stored; **28 selected institutions have a logo and two images**. The six incomplete media sets include the intentionally unverified Genius draft; the five published gaps are Happy Kids, Raduga Tokmok, AALAM Tokmok, Amir Tokmok and Diplomat's missing logo. Missing public contacts/programs/teaching languages remain explicit, not invented. Some genuine school video covers are captioned as such.
 - Happy Kids uses the most documented Bakaev141 kindergarten listing under the owner's branch-selection preference; it is published as unverified, with current operating status and media gaps disclosed. Indigo West's school identity was resolved; incorrect kindergarten contacts were cleared and independently verified as NULL.

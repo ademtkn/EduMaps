@@ -9,7 +9,7 @@ import { sanitizeLine, sanitizeMultiline } from "@/lib/security/sanitize";
 import { rateLimit } from "@/lib/security/rate-limit";
 import { adPayloadSchema, articlePayloadSchema, catalogItemSchema, categoryPayloadSchema, guestVoiceSchema, schoolPayloadSchema } from "@/lib/validation/admin";
 import { resolveMapLink } from "@/lib/map-links-resolve";
-import type { MapService } from "@/lib/map-links";
+import { serviceOf, type MapService } from "@/lib/map-links";
 import { requireRole } from "./admin-auth";
 
 export type AdminResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string; fieldErrors?: Record<string, string> };
@@ -49,6 +49,67 @@ export async function saveSchoolAction(input: unknown): Promise<AdminResult<{ id
   refreshPublic();
   revalidatePath("/admin/schools");
   return { ok: true, data: { id: data as string } };
+}
+
+/**
+ * Saves the map pin of one school from a pasted Google Maps / 2GIS link (or typed coordinates).
+ *
+ * Used by the "Map pins" workbench, which walks the profiles that have no coordinates yet. Short
+ * links are followed server-side by `resolveMapLink`; the coordinates must fall inside Kyrgyzstan,
+ * which is also what the database enforces.
+ */
+export async function saveSchoolPinAction(input: unknown): Promise<AdminResult<{ lat: number; lng: number }>> {
+  const ctx = await requireRole(["admin"]);
+  if (!ctx) return fail("Not authorized.");
+  const parsed = z
+    .object({
+      schoolId: z.string().uuid(),
+      link: z.string().trim().max(2000).optional(),
+      lat: z.number().finite().optional(),
+      lng: z.number().finite().optional(),
+    })
+    .safeParse(input);
+  if (!parsed.success) return zodFail(parsed.error);
+  if (!rateLimit(`admin:pin:${ctx.user.id}`, 300, 60_000).ok) return fail("Too many saves in a row. Wait a moment.");
+
+  const { schoolId, link } = parsed.data;
+  let coords: { lat: number; lng: number } | null =
+    parsed.data.lat != null && parsed.data.lng != null ? { lat: parsed.data.lat, lng: parsed.data.lng } : null;
+  let service: MapService | null = null;
+  let resolved: string | null = null;
+
+  if (link) {
+    const detected = serviceOf(link);
+    if (!detected) return fail("Paste a Google Maps or 2GIS link, or type the coordinates.");
+    const result = await resolveMapLink(detected.service, link);
+    if (!result.ok) return fail(result.error ?? "This link could not be read.");
+    service = detected.service;
+    resolved = result.url;
+    coords = result.coords ?? coords;
+  }
+  if (!coords) return fail("No coordinates in this link. Open the place in the map app and copy the link with the pin.");
+  if (coords.lat < 39 || coords.lat > 44 || coords.lng < 69 || coords.lng > 81) {
+    return fail("These coordinates are outside Kyrgyzstan.");
+  }
+
+  const patch = {
+    lat: coords.lat,
+    lng: coords.lng,
+    ...(service === "google" && resolved ? { google_maps_url: resolved } : {}),
+    ...(service === "twogis" && resolved ? { twogis_url: resolved } : {}),
+  };
+  const { data: updated, error } = await ctx.supabase.from("school_locations").update(patch).eq("school_id", schoolId).select("school_id");
+  if (error) return dbFail(error);
+  if ((updated ?? []).length === 0) {
+    // No location row yet: the address column is required, so it starts empty.
+    const { error: insertError } = await ctx.supabase.from("school_locations").insert({ school_id: schoolId, address: {}, ...patch });
+    if (insertError) return dbFail(insertError);
+  }
+
+  refreshPublic();
+  revalidatePath("/admin/map-pins");
+  revalidatePath("/admin/schools");
+  return { ok: true, data: coords };
 }
 
 export async function deleteSchoolAction(id: string): Promise<AdminResult> {

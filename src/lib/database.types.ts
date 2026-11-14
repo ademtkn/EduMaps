@@ -790,7 +790,7 @@ isOneToOne: false
           Views: {
             "admin_school_completeness": {
                   Row: {
-                    "id": string,"slug": string,"name": NonNullable<Json>,"search_text": string,"status": Database["public"]['Enums']["publish_status"],"data_status": string,"school_type": Database["public"]['Enums']["school_type"],"institution_kind": string,"updated_at": string,"rating_avg": number,"rating_count": number,"view_count": number,"city_name": Json | null,"has_cover": boolean,"has_logo": boolean,"has_location": boolean,"has_address": boolean,"has_fee": boolean,"has_contact": boolean,"media_count": number,"program_count": number
+                    "id": string,"slug": string,"name": NonNullable<Json>,"search_text": string,"status": Database["public"]['Enums']["publish_status"],"data_status": string,"school_type": Database["public"]['Enums']["school_type"],"institution_kind": string,"updated_at": string,"rating_avg": number,"rating_count": number,"view_count": number,"city_name": Json | null,"address": Json | null,"google_maps_url": string | null,"twogis_url": string | null,"has_cover": boolean,"has_logo": boolean,"has_location": boolean,"has_address": boolean,"has_fee": boolean,"has_contact": boolean,"media_count": number,"program_count": number
                   }
                   ComputedFields: never
                   Insert: {

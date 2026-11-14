@@ -31,6 +31,9 @@ select
      nullif(btrim(l.address ->> 'ru'), ''),
      nullif(btrim(l.address ->> 'kg'), '')
    ) is not null) as has_address,
+  l.address,
+  l.google_maps_url,
+  l.twogis_url,
   (s.fee_min is not null or s.fee_max is not null) as has_fee,
   (s.phone is not null or s.email is not null or s.website is not null) as has_contact,
   (select count(*) from public.school_media m where m.school_id = s.id) as media_count,
