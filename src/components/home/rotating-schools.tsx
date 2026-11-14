@@ -61,13 +61,16 @@ export function RotatingSchools({ initial }: { initial: Selection }) {
   return (
     <div ref={attach as never} {...hover} data-testid="rotating-schools">
       <div key={version} className={version > 0 ? "swap-in grid gap-6 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-6 sm:grid-cols-2 lg:grid-cols-3"}>
-        {cells.map((cell, i) =>
-          cell.kind === "school" ? (
-            <SchoolCard key={cell.school.id} school={cell.school} lang={lang} dict={dict} priority={i < 3} />
-          ) : (
-            <AdCard key={cell.ad.id} ad={cell.ad} lang={lang} dict={dict} className="h-full" />
-          )
-        )}
+        {cells.map((cell, i) => (
+          // Six cards make the phone home page very long; the last three stay for larger screens.
+          <div key={cell.kind === "school" ? cell.school.id : cell.ad.id} className={i >= 3 ? "hidden h-full sm:block" : "h-full"}>
+            {cell.kind === "school" ? (
+              <SchoolCard school={cell.school} lang={lang} dict={dict} priority={i < 3} />
+            ) : (
+              <AdCard ad={cell.ad} lang={lang} dict={dict} className="h-full" />
+            )}
+          </div>
+        ))}
       </div>
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-small text-ink-600">
         <p>{paused ? t.paused : t.status}</p>

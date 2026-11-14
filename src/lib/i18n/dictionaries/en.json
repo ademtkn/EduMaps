@@ -456,6 +456,8 @@
     "classSize": "Class size",
     "founded": "Founded",
     "none": "—",
+    "searchPlaceholder": "Search a school by name…",
+    "searchHint": "Type at least two letters.",
     "addMore": "Add another school",
     "bestValue": "Lowest tuition",
     "topRated": "Top rated",

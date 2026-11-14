@@ -13,7 +13,7 @@ import { LLink } from "@/components/ui/localized-link";
 import { MediaImage } from "@/components/ui/media-image";
 import { RatingBadge } from "@/components/ui/rating";
 import { PageHeader } from "@/components/ui/section";
-import { getSchoolsBySlugs, listSchoolOptions } from "@/lib/data/schools";
+import { getSchoolsBySlugs } from "@/lib/data/schools";
 import type { SchoolDetail } from "@/lib/data/types";
 import { MAX_COMPARE } from "@/lib/constants";
 import { isLang, localizedPath } from "@/lib/i18n/config";
@@ -51,7 +51,8 @@ export default async function ComparePage({ params, searchParams }: Props) {
   const { lang } = await params;
   if (!isLang(lang)) notFound();
   const slugs = parseSlugs((await searchParams).s);
-  const [dict, schools, options] = await Promise.all([getDictionary(lang), getSchoolsBySlugs(slugs), listSchoolOptions()]);
+  // The picker searches on demand, so the page no longer loads the whole directory.
+  const [dict, schools] = await Promise.all([getDictionary(lang), getSchoolsBySlugs(slugs)]);
   const current = schools.map((s) => s.slug);
   const none = <span className="text-ink-400">{dict.compare.none}</span>;
 
@@ -80,7 +81,7 @@ export default async function ComparePage({ params, searchParams }: Props) {
       <ViewTracker type="compare" dedupe={slugs.join(",")} />
       <CompareSync />
       <PageHeader title={dict.compare.title} description={dict.compare.description}>
-        {schools.length > 0 ? <div className="mt-5"><AddToCompare current={current} options={options.map((o) => ({ slug: o.slug, label: `${tr(o.name, lang)} — ${tr(o.city, lang)}` }))} /></div> : null}
+        {schools.length > 0 ? <div className="mt-5"><AddToCompare current={current} lang={lang} /></div> : null}
       </PageHeader>
 
       <div className="container-page py-8">

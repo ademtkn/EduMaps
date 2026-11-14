@@ -200,7 +200,7 @@ export function MapExplorer({ schools, cities, token, unmapped = 0 }: { schools:
               labels={{ viewProfile: dict.map.viewProfile, notRated: dict.common.notRatedYet, loadError: dict.map.loadError, resetView: dict.map.resetView }}
             />
           ) : (
-            <div className="flex size-full flex-col items-center justify-center gap-4 bg-ink-100 p-8 text-center">
+            <div className="flex size-full flex-col items-center justify-center gap-4 bg-ink-50 bg-[radial-gradient(circle_at_1px_1px,rgb(21_26_38/0.10)_1px,transparent_0)] bg-[size:22px_22px] p-8 text-center">
               <MapPinOff className="size-10 text-ink-400" />
               <Alert tone="info" title={dict.map.tokenMissing} className="max-w-md text-left">{dict.map.tokenHint}</Alert>
               <Button variant="outline" className="lg:hidden" onClick={() => setView("list")}><List /> {dict.map.listView}</Button>

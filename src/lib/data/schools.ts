@@ -301,16 +301,6 @@ export async function getAllSchoolSlugs(options: { includeDemo?: boolean } = {})
   });
 }
 
-export async function listSchoolOptions(): Promise<{ slug: string; name: SchoolCardData["name"]; city: SchoolCardData["cities"]["name"] }[]> {
-  const rows = await fetchAllRows<{ slug: string; name: SchoolCardData["name"]; cities: { name: SchoolCardData["cities"]["name"] } }>(() =>
-    createPublicClient()
-      .from("schools")
-      .select("slug,name,cities!inner(name)")
-      .eq("status", "published")
-      .order("rating_avg", { ascending: false })
-  );
-  return rows.map((r) => ({ slug: r.slug, name: r.name, city: r.cities.name }));
-}
 
 export type CategoryScores = { teaching: number | null; facilities: number | null; safety: number | null; communication: number | null };
 

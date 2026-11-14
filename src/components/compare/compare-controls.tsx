@@ -1,12 +1,13 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCompare } from "@/components/compare/compare-provider";
 import { MAX_COMPARE } from "@/lib/constants";
+import type { Lang } from "@/lib/i18n/config";
 import { useDict } from "@/components/i18n-provider";
-import { Select } from "@/components/ui/form";
+import { ComparePicker } from "./compare-picker";
 
 /** Keeps the shareable ?s=a,b,c URL and the visitor's saved selection in step. */
 export function CompareSync() {
@@ -56,32 +57,6 @@ export function RemoveFromCompare({ slug, current }: { slug: string; current: st
   );
 }
 
-export function AddToCompare({ options, current }: { options: { slug: string; label: string }[]; current: string[] }) {
-  const { slugs } = useCompare();
-  const dict = useDict();
-  const router = useRouter();
-  const pathname = usePathname();
-  const { toggle } = useCompare();
-  if (current.length >= MAX_COMPARE) return null;
-
-  return (
-    <label className="flex items-center gap-2">
-      <Plus className="size-4 shrink-0 text-ink-500" />
-      <span className="sr-only">{dict.compare.addMore}</span>
-      <Select
-        value=""
-        className="h-10 min-w-56"
-        aria-label={dict.compare.addMore}
-        onChange={(event) => {
-          const slug = event.target.value;
-          if (!slug) return;
-          if (!slugs.includes(slug)) toggle(slug);
-          router.replace(`${pathname}?s=${[...current, slug].slice(0, MAX_COMPARE).join(",")}`);
-        }}
-      >
-        <option value="">{dict.compare.addMore}</option>
-        {options.filter((o) => !current.includes(o.slug)).map((o) => <option key={o.slug} value={o.slug}>{o.label}</option>)}
-      </Select>
-    </label>
-  );
+export function AddToCompare({ current, lang }: { current: string[]; lang: Lang }) {
+  return <ComparePicker current={current} lang={lang} />;
 }
