@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /** The look of every text field; exported for fields that need their own wrapper (the search box with suggestions). */
 export const control =
-  "w-full rounded-control border border-ink-300 bg-white px-3.5 text-body text-ink-900 placeholder:text-ink-400 transition-colors hover:border-ink-400 focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-ink-100 aria-[invalid=true]:border-danger-600 aria-[invalid=true]:focus:ring-danger-50";
+  "w-full rounded-control border border-ink-300 bg-white px-3.5 text-body text-ink-900 placeholder:text-ink-500 transition-colors hover:border-ink-400 focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-100 disabled:cursor-not-allowed disabled:bg-ink-100 aria-[invalid=true]:border-danger-600 aria-[invalid=true]:focus:ring-danger-50";
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => <input ref={ref} className={cn(control, "h-11", className)} {...props} />

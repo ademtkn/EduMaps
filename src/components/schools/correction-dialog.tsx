@@ -46,7 +46,7 @@ export function CorrectionDialog({ schoolId }: { schoolId: string }) {
 
   return (
     <>
-      <button type="button" onClick={() => { setOpen(true); setDone(false); }} className="inline-flex items-center gap-1.5 text-caption font-semibold text-ink-600 hover:text-brand-700">
+      <button type="button" onClick={() => { setOpen(true); setDone(false); }} className="inline-flex min-h-6 items-center gap-1.5 py-1 text-caption font-semibold text-ink-600 hover:text-brand-700">
         <Flag className="size-3.5" />{c.cta}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>

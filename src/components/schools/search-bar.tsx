@@ -20,7 +20,7 @@ export function SearchBar({ lang, dict, cities, defaultQuery = "", defaultCity =
           defaultValue={defaultQuery}
           maxLength={80}
           placeholder={dict.home.searchPlaceholder}
-          className="h-12 w-full rounded-control border-0 bg-transparent pl-11 pr-3 text-body text-ink-900 placeholder:text-ink-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          className="h-12 w-full rounded-control border-0 bg-transparent pl-11 pr-3 text-body text-ink-900 placeholder:text-ink-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
       </div>
       <div className="hidden h-8 w-px bg-ink-200 sm:block" />

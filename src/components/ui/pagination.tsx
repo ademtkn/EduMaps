@@ -4,15 +4,15 @@ import { cn } from "@/lib/utils";
 
 /** Server-rendered pagination. `hrefFor` builds the URL for a page number. */
 export function Pagination({
-  page, totalPages, hrefFor, prevLabel, nextLabel,
-}: { page: number; totalPages: number; hrefFor: (page: number) => string; prevLabel: string; nextLabel: string }) {
+  page, totalPages, hrefFor, prevLabel, nextLabel, label = "Pagination",
+}: { page: number; totalPages: number; hrefFor: (page: number) => string; prevLabel: string; nextLabel: string; label?: string }) {
   if (totalPages <= 1) return null;
   const pages = new Set<number>([1, totalPages, page - 1, page, page + 1]);
   const list = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
 
   const item = "inline-flex h-10 min-w-10 items-center justify-center rounded-control px-3 text-small font-semibold";
   return (
-    <nav aria-label="Pagination" className="mt-10 flex flex-wrap items-center justify-center gap-1.5">
+    <nav aria-label={label} className="mt-10 flex flex-wrap items-center justify-center gap-1.5">
       {page > 1 ? (
         <Link href={hrefFor(page - 1)} className={cn(item, "text-ink-700 hover:bg-ink-100")} aria-label={prevLabel} rel="prev">
           <ChevronLeft className="size-4" />

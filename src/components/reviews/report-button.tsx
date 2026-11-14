@@ -43,7 +43,7 @@ export function ReportButton({ entityType, entityId }: { entityType: "review" | 
           if (!member) router.push(`${localizedPath(lang, "/auth/login")}?next=${encodeURIComponent(pathname)}`);
           else setOpen(true);
         }}
-        className="inline-flex items-center gap-1 text-caption font-medium text-ink-500 hover:text-danger-600"
+        className="inline-flex min-h-6 items-center gap-1 py-1 text-caption font-medium text-ink-500 hover:text-danger-600"
       >
         <Flag className="size-3.5" /> {dict.reviews.report}
       </button>

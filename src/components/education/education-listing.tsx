@@ -65,6 +65,7 @@ export async function EducationListing({ lang, dict, categories, category, kind,
         hrefFor={(p) => href({ kind, page: p })}
         prevLabel={dict.common.prevPage}
         nextLabel={dict.common.nextPage}
+        label={dict.common.pagination}
       />
     </div>
   );

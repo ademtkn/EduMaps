@@ -52,8 +52,13 @@ export function RotatingVoices({ voices }: { voices: TestimonialData[] }) {
                 aria-label={fmt(t.goTo, { n: i + 1 })}
                 aria-current={i === index}
                 onClick={() => go(i)}
-                className={cn("h-2 rounded-full transition-all", i === index ? "w-6 bg-brand-600" : "w-2 bg-ink-300 hover:bg-ink-400")}
-              />
+                className="group flex h-6 items-center px-0.5"
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn("block h-2 rounded-full transition-all", i === index ? "w-6 bg-brand-600" : "w-2 bg-ink-300 group-hover:bg-ink-400")}
+                />
+              </button>
             ))}
           </div>
           <div className="flex items-center gap-2">

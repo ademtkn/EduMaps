@@ -43,6 +43,8 @@
     "by": "By",
     "prevPage": "Previous page",
     "nextPage": "Next page",
+    "breadcrumb": "Breadcrumb",
+    "pagination": "Pagination",
     "dismiss": "Dismiss",
     "yes": "Yes",
     "no": "No",

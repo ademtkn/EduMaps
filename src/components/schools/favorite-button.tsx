@@ -56,7 +56,7 @@ export function FavoriteButton({ kind, id, variant = "icon", className }: Props)
       aria-label={label}
       title={label}
       className={cn(
-        "relative z-10 inline-flex size-9 items-center justify-center rounded-full bg-white/95 shadow-sm backdrop-blur transition hover:scale-105",
+        "relative z-10 inline-flex size-10 items-center justify-center rounded-full bg-white/95 shadow-sm backdrop-blur transition hover:scale-105",
         saved ? "text-brand-700" : "text-ink-600 hover:text-brand-700",
         className
       )}

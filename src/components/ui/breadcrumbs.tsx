@@ -1,10 +1,14 @@
+"use client";
+
 import { ChevronRight } from "lucide-react";
+import { useDict } from "@/components/i18n-provider";
 import { LLink } from "./localized-link";
 
-export function Breadcrumbs({ items, tone = "dark" }: { items: { label: string; href?: string }[]; tone?: "dark" | "light" }) {
+export function Breadcrumbs({ items, tone = "dark", label }: { items: { label: string; href?: string }[]; tone?: "dark" | "light"; label?: string }) {
   const light = tone === "light";
+  const dict = useDict();
   return (
-    <nav aria-label="Breadcrumb" className="mb-4">
+    <nav aria-label={label ?? dict.common.breadcrumb} className="mb-4">
       <ol className={`flex flex-wrap items-center gap-1 text-caption ${light ? "text-brand-200" : "text-ink-500"}`}>
         {items.map((item, i) => (
           <li key={`${item.label}-${i}`} className="flex items-center gap-1">

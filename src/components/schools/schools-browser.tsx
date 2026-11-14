@@ -49,9 +49,10 @@ export async function SchoolsBrowser({ lang, dict, basePath, searchParams, filte
 
       <div>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-small font-medium text-ink-700" aria-live="polite">
+          {/* A real h2 keeps the card headings (h3) in order for screen readers and outline tools. */}
+          <h2 className="text-small font-medium text-ink-700" aria-live="polite">
             {total === 1 ? dict.schools.foundOne : fmt(dict.schools.found, { count: total })}
-          </p>
+          </h2>
           <div className="flex flex-wrap items-start gap-3">
             <NearMe active={Boolean(filters.near)} />
             <SortSelect current={filters.sort ?? "rating"} near={Boolean(filters.near)} />
@@ -73,7 +74,7 @@ export async function SchoolsBrowser({ lang, dict, basePath, searchParams, filte
           </div>
         )}
 
-        <Pagination page={page} totalPages={totalPages} hrefFor={hrefFor} prevLabel={dict.common.prevPage} nextLabel={dict.common.nextPage} />
+        <Pagination page={page} totalPages={totalPages} hrefFor={hrefFor} prevLabel={dict.common.prevPage} nextLabel={dict.common.nextPage} label={dict.common.pagination} />
 
         <div className="mt-10">
           <AdSlot placement="banner" lang={lang} dict={dict} />

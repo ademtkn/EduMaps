@@ -47,6 +47,21 @@ The local database was inspected for the first time since the import. Numbers a 
   approval, replies inside a post publish immediately and are hidden afterwards. `docs/ARCHITECTURE.md`
   said otherwise and now matches `guard_comment`.
 
+### 15 Nov 2026 — experience and accessibility pass
+
+The owner confirmed on 15 Nov that **the site stays local for now; there is no public launch**. Deployment
+items below stay on the shelf until that changes.
+
+- Loading states exist for the directory and the school page (`schools/loading.tsx`,
+  `schools/[slug]/loading.tsx`), so a slow query no longer looks like a frozen page.
+- Contrast: the "fair" letter grade moved from `warning-500` (2.8:1) to `warning-700`, and input
+  placeholders from `ink-400` (2.6:1) to `ink-500`.
+- Touch targets: report/correct links are at least 24 px tall, the favourite button is 40 px, and the
+  opinion dots have a 24 px hit area around the 8 px dot.
+- Heading order: the directory result count is an `h2`, so the card `h3`s no longer skip a level.
+- `Pagination` and `Breadcrumbs` take their accessible names from the dictionary instead of the
+  hardcoded English "Pagination"/"Breadcrumb" (846 keys × 3 languages).
+
 - All **34 selected institutions** are researched and imported: **33 published**, **Genius.kg Tokmok draft** by explicit owner instruction. An additional historical AIM Balykchy candidate is preserved as a draft, superseded by Birinchi Mugalim in the selected Issyk-Kul batch. Thus import-state has35 historical entries, not35 selected institutions.
 - **87 actual sourced image assets** are stored; **28 selected institutions have a logo and two images**. The six incomplete media sets include the intentionally unverified Genius draft; the five published gaps are Happy Kids, Raduga Tokmok, AALAM Tokmok, Amir Tokmok and Diplomat's missing logo. Missing public contacts/programs/teaching languages remain explicit, not invented. Some genuine school video covers are captioned as such.
 - Happy Kids uses the most documented Bakaev141 kindergarten listing under the owner's branch-selection preference; it is published as unverified, with current operating status and media gaps disclosed. Indigo West's school identity was resolved; incorrect kindergarten contacts were cleared and independently verified as NULL.

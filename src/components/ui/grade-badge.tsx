@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 const TONE = {
   excellent: "bg-leaf-600 text-white",
   good: "bg-brand-600 text-white",
-  fair: "bg-warning-500 text-white",
+  fair: "bg-warning-700 text-white",
   poor: "bg-danger-600 text-white",
 };
 const SIZE = { sm: "size-9 text-small", md: "size-12 text-h3", lg: "size-16 text-h2", xl: "size-24 text-display" };
