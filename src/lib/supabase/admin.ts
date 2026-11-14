@@ -4,9 +4,11 @@ import type { Database } from "@/lib/database.types";
 import { supabaseEnv } from "./env";
 
 /**
- * Service-role client. It bypasses row level security, so it is used for exactly one thing:
- * turning a username into the email address Supabase Auth signs in with (`email_for_username`).
- * Never hand its results to the browser and never add other queries here.
+ * Service-role client. It bypasses row level security, so it has exactly two callers:
+ * turning a username into the email address Supabase Auth signs in with (`email_for_username`),
+ * and the `/api/track` route, because the two counters (`track_event`, `track_ad_event`) are no
+ * longer executable by the public key. Never hand its results to the browser and keep every other
+ * query on the public or session client.
  */
 export function createServiceClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

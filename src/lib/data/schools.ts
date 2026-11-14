@@ -2,6 +2,7 @@ import "server-only";
 import { createPublicClient } from "@/lib/supabase/public";
 import { BISHKEK_DISTRICTS } from "@/lib/constants";
 import { distanceMeters, type Coords } from "@/lib/geo";
+import { fetchAllRows, fetchAllValues } from "./paging";
 import type { Lang } from "@/lib/i18n/config";
 import type { I18nText } from "@/lib/i18n/localized";
 import type { MapSchool, ReviewData, SchoolCardData, SchoolDetail } from "./types";
@@ -14,8 +15,8 @@ type CardRow = SchoolCardData & { school_locations?: { address: I18nText } | { a
 
 /** Flattens the one-to-one location embed into a plain address on the card. */
 function toCard(row: CardRow): SchoolCardData {
-  const location = Array.isArray(row.school_locations) ? row.school_locations[0] : row.school_locations;
-  const { school_locations: _location, ...card } = row;
+  const { school_locations, ...card } = row;
+  const location = Array.isArray(school_locations) ? school_locations[0] : school_locations;
   return { ...card, address: location?.address ?? null };
 }
 
@@ -60,13 +61,19 @@ export async function listSchools(filters: SchoolFilters): Promise<{ items: Scho
 
   let allowedIds: string[] | null = null;
   if (filters.languages?.length) {
-    const { data } = await db.from("school_languages").select("school_id").in("language_code", filters.languages);
-    allowedIds = [...new Set((data ?? []).map((r) => r.school_id))];
+    const ids = await fetchAllValues<string>(
+      () => db.from("school_languages").select("school_id").in("language_code", filters.languages!),
+      "school_id"
+    );
+    allowedIds = [...new Set(ids)];
     if (allowedIds.length === 0) return { items: [], total: 0 };
   }
   if (filters.district && (BISHKEK_DISTRICTS as readonly string[]).includes(filters.district)) {
-    const { data } = await db.from("school_locations").select("school_id").ilike("district", `${filters.district}%`);
-    const inDistrict = new Set((data ?? []).map((r) => r.school_id));
+    const ids = await fetchAllValues<string>(
+      () => db.from("school_locations").select("school_id").ilike("district", `${filters.district}%`),
+      "school_id"
+    );
+    const inDistrict = new Set(ids);
     allowedIds = (allowedIds ?? [...inDistrict]).filter((id) => inDistrict.has(id));
     if (allowedIds.length === 0) return { items: [], total: 0 };
   }
@@ -215,8 +222,7 @@ export async function getSchoolReviews(schoolId: string, page = 1, pageSize = 8)
  */
 export async function getRandomSchools(count = 6, options: { fresh?: boolean } = {}): Promise<SchoolCardData[]> {
   const db = createPublicClient({ fresh: options.fresh ?? true });
-  const { data: ids } = await db.from("schools").select("id").eq("status", "published");
-  const pool = (ids ?? []).map((row) => row.id);
+  const pool = await fetchAllValues<string>(() => db.from("schools").select("id").eq("status", "published"), "id");
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j]!, pool[i]!];
@@ -230,14 +236,6 @@ export async function getRandomSchools(count = 6, options: { fresh?: boolean } =
 
 export async function getMapSchools(): Promise<MapSchool[]> {
   const db = createPublicClient();
-  const { data, error } = await db
-    .from("schools")
-    .select(
-      "id,slug,name,logo_url,rating_avg,rating_count,tuition_min,tuition_max,school_type,institution_kind,education_systems,grade_from,grade_to,has_transportation,has_boarding,has_sports,cities!inner(slug),school_languages(language_code),school_locations!inner(lat,lng,address)"
-    )
-    .eq("status", "published")
-    .not("school_locations.lat", "is", null);
-  if (error) throw new Error(`getMapSchools failed: ${error.message}`);
   type Row = {
     id: string; slug: string; name: MapSchool["name"]; logo_url: string | null; rating_avg: number; rating_count: number;
     tuition_min: number | null; tuition_max: number | null; school_type: string; institution_kind: string; education_systems: string[];
@@ -245,7 +243,17 @@ export async function getMapSchools(): Promise<MapSchool[]> {
     cities: { slug: string }; school_languages: { language_code: string }[];
     school_locations: { lat: number; lng: number; address: MapSchool["address"] } | { lat: number; lng: number; address: MapSchool["address"] }[];
   };
-  return ((data ?? []) as unknown as Row[]).map((r) => {
+  // Read in pages: the map must show every school, not the first thousand.
+  const data = await fetchAllRows<Row>(() =>
+    db
+      .from("schools")
+      .select(
+        "id,slug,name,logo_url,rating_avg,rating_count,tuition_min,tuition_max,school_type,institution_kind,education_systems,grade_from,grade_to,has_transportation,has_boarding,has_sports,cities!inner(slug),school_languages(language_code),school_locations!inner(lat,lng,address)"
+      )
+      .eq("status", "published")
+      .not("school_locations.lat", "is", null)
+  );
+  return data.map((r) => {
     const loc = Array.isArray(r.school_locations) ? r.school_locations[0]! : r.school_locations;
     return {
       id: r.id, slug: r.slug, name: r.name, logo_url: r.logo_url, rating_avg: r.rating_avg, rating_count: r.rating_count,
@@ -265,7 +273,7 @@ export async function getMapSchools(): Promise<MapSchool[]> {
  */
 export async function getSiteStats() {
   const db = createPublicClient();
-  const [schools, reviews, articles, located] = await Promise.all([
+  const [schools, reviews, articles, cityRows] = await Promise.all([
     db.from("schools").select("id", { count: "exact", head: true }).eq("status", "published"),
     db
       .from("reviews")
@@ -273,11 +281,9 @@ export async function getSiteStats() {
       .eq("status", "published")
       .eq("schools.status", "published"),
     db.from("articles").select("id", { count: "exact", head: true }).eq("status", "published"),
-    // Only cities that hold at least one published school are counted. The list is read in one
-    // request; once more than 1000 schools are published this has to page like the other lists.
-    db.from("schools").select("city_id").eq("status", "published"),
+    fetchAllRows<{ city_id: string | null }>(() => db.from("schools").select("city_id").eq("status", "published")),
   ]);
-  const cities = new Set(((located.data ?? []) as unknown as { city_id: string | null }[]).map((r) => r.city_id).filter(Boolean)).size;
+  const cities = new Set(cityRows.map((r) => r.city_id).filter(Boolean)).size;
   return {
     schools: schools.count ?? 0,
     reviews: reviews.count ?? 0,
@@ -289,23 +295,21 @@ export async function getSiteStats() {
 /** Slugs of published schools. Sample (demo) profiles are left out unless asked for, so they never reach the sitemap. */
 export async function getAllSchoolSlugs(options: { includeDemo?: boolean } = {}): Promise<{ slug: string; updated_at: string }[]> {
   const db = createPublicClient();
-  let query = db.from("schools").select("slug,updated_at").eq("status", "published");
-  if (!options.includeDemo) query = query.neq("data_status", "demo");
-  const { data } = await query;
-  return data ?? [];
+  return fetchAllRows<{ slug: string; updated_at: string }>(() => {
+    const query = db.from("schools").select("slug,updated_at").eq("status", "published");
+    return options.includeDemo ? query : query.neq("data_status", "demo");
+  });
 }
 
 export async function listSchoolOptions(): Promise<{ slug: string; name: SchoolCardData["name"]; city: SchoolCardData["cities"]["name"] }[]> {
-  const { data } = await createPublicClient()
-    .from("schools")
-    .select("slug,name,cities!inner(name)")
-    .eq("status", "published")
-    .order("rating_avg", { ascending: false });
-  return ((data ?? []) as unknown as { slug: string; name: SchoolCardData["name"]; cities: { name: SchoolCardData["cities"]["name"] } }[]).map((r) => ({
-    slug: r.slug,
-    name: r.name,
-    city: r.cities.name,
-  }));
+  const rows = await fetchAllRows<{ slug: string; name: SchoolCardData["name"]; cities: { name: SchoolCardData["cities"]["name"] } }>(() =>
+    createPublicClient()
+      .from("schools")
+      .select("slug,name,cities!inner(name)")
+      .eq("status", "published")
+      .order("rating_avg", { ascending: false })
+  );
+  return rows.map((r) => ({ slug: r.slug, name: r.name, city: r.cities.name }));
 }
 
 export type CategoryScores = { teaching: number | null; facilities: number | null; safety: number | null; communication: number | null };

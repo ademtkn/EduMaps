@@ -1,5 +1,6 @@
 import "server-only";
 import { createPublicClient } from "@/lib/supabase/public";
+import { fetchAllRows } from "./paging";
 import type { CategoryData, CommentData, PostData } from "./types";
 
 const POST_SELECT =
@@ -58,6 +59,7 @@ export async function postCountsByCategory(): Promise<Record<string, number>> {
 }
 
 export async function getAllPostIds(): Promise<{ id: string; created_at: string }[]> {
-  const { data } = await createPublicClient().from("community_posts").select("id,created_at").eq("status", "published");
-  return data ?? [];
+  return fetchAllRows<{ id: string; created_at: string }>(() =>
+    createPublicClient().from("community_posts").select("id,created_at").eq("status", "published")
+  );
 }

@@ -349,15 +349,16 @@ async function main() {
   const clearedRow = await service.from("school_locations").select("google_maps_url,twogis_url").eq("school_id", waId).single();
   check("saving without links clears them", !cleared.error && clearedRow.data?.google_maps_url === null && clearedRow.data?.twogis_url === null, cleared.error?.message);
   const stat = async () => (await admin.client.rpc("admin_school_stats_detail", { p_school: waId, p_days: 30 })).data as { contacts: Record<string, number>; sections: Record<string, number>; time: Record<string, number>; views: number; compare_adds: number } | null;
-  await anon.rpc("track_event", { p_type: "school_view", p_entity: waId, p_lang: "kg", p_meta: "directory" });
-  await anon.rpc("track_event", { p_type: "contact_click", p_entity: waId, p_lang: "kg", p_meta: "whatsapp" });
-  await anon.rpc("track_event", { p_type: "section_view", p_entity: waId, p_lang: "kg", p_meta: "tuition" });
-  await anon.rpc("track_event", { p_type: "time_on_page", p_entity: waId, p_lang: "kg", p_meta: "s10_30" });
-  await anon.rpc("track_event", { p_type: "compare_add", p_entity: waId, p_lang: "kg" });
+  // Simulates /api/track, which calls these RPCs with the service role (the public key may not).
+  await service.rpc("track_event", { p_type: "school_view", p_entity: waId, p_lang: "kg", p_meta: "directory" });
+  await service.rpc("track_event", { p_type: "contact_click", p_entity: waId, p_lang: "kg", p_meta: "whatsapp" });
+  await service.rpc("track_event", { p_type: "section_view", p_entity: waId, p_lang: "kg", p_meta: "tuition" });
+  await service.rpc("track_event", { p_type: "time_on_page", p_entity: waId, p_lang: "kg", p_meta: "s10_30" });
+  await service.rpc("track_event", { p_type: "compare_add", p_entity: waId, p_lang: "kg" });
   const s1 = await stat();
   check("views, WhatsApp presses, sections, time and comparisons are counted for the school", s1?.views === 1 && s1.contacts.whatsapp === 1 && s1.sections.tuition === 1 && s1.time.s10_30 === 1 && s1.compare_adds === 1, JSON.stringify(s1));
-  await anon.rpc("track_event", { p_type: "contact_click", p_entity: waId, p_lang: "kg" });
-  await anon.rpc("track_event", { p_type: "contact_click", p_entity: "00000000-0000-0000-0000-000000000000", p_lang: "kg", p_meta: "whatsapp" });
+  await service.rpc("track_event", { p_type: "contact_click", p_entity: waId, p_lang: "kg" });
+  await service.rpc("track_event", { p_type: "contact_click", p_entity: "00000000-0000-0000-0000-000000000000", p_lang: "kg", p_meta: "whatsapp" });
   const s2 = await stat();
   check("a press without a button name, or for an unknown school, is not counted", s2?.contacts.whatsapp === 1 && Object.keys(s2.contacts).length === 1);
   const memberStats = await member.client.rpc("admin_school_stats", { p_days: 30 });
@@ -443,9 +444,13 @@ async function main() {
 
   const adAnon = await anon.from("advertisements").select("id,is_active,starts_at,ends_at");
   check("visitors only see live ads", (adAnon.data ?? []).every((a) => a.is_active && new Date(a.starts_at) <= new Date()));
-  await anon.rpc("track_ad_event", { p_ad: tempAd!.id, p_event: "impression", p_lang: "kg" });
+  const anonImpression = await anon.rpc("track_ad_event", { p_ad: tempAd!.id, p_event: "impression", p_lang: "kg" });
+  check("the public key cannot count ad impressions directly", Boolean(anonImpression.error));
+  const anonView = await anon.rpc("track_event", { p_type: "school_view", p_entity: school.id, p_lang: "kg" });
+  check("the public key cannot record page views directly", Boolean(anonView.error));
+  await service.rpc("track_ad_event", { p_ad: tempAd!.id, p_event: "impression", p_lang: "kg" });
   const after = await service.from("advertisements").select("impressions").eq("id", tempAd!.id).single();
-  check("ad impressions are counted through the RPC", Number(after.data?.impressions) === 1);
+  check("the server-side counter still records an impression", Number(after.data?.impressions) === 1);
   await service.from("advertisements").delete().eq("id", tempAd!.id);
 
   // cleanup

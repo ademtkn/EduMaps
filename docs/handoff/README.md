@@ -29,6 +29,24 @@ The local database was inspected for the first time since the import. Numbers a 
 - Local sample data was **not** deleted, only unpublished: `npm run db:seed` would bring it back.
   Do not seed without deciding what to do with the eight sample ads and 15 posts.
 
+### 15 Nov 2026 — release blockers
+
+- **Row cap:** PostgREST stops at 1000 rows without an error. `src/lib/data/paging.ts` reads such lists
+  page by page and is now used by the sitemap slugs, the map, the comparison picker, the language and
+  district filters, the per-city counts, the site statistics and the community sitemap. `npm run
+  test:paging` covers the helper (2500 rows, exact page, failing page).
+- **Tracking is server-only:** migration 25 revokes `track_event` / `track_ad_event` from `public`,
+  `anon` and `authenticated` (PostgreSQL grants EXECUTE to PUBLIC by default) and grants them to
+  `service_role`. `/api/track` therefore calls them with the service client; the public key can no
+  longer inflate counters past the same-origin check and rate limit.
+- **Pre-flight:** `npm run check:env` refuses a localhost `NEXT_PUBLIC_SITE_URL` or Supabase URL, a
+  non-`pk.` Mapbox token and a short `OAUTH_STATE_SECRET`, and warns about missing mail settings.
+- **Backups:** `npm run db:backup` writes a gzipped `pg_dump` of the public schema plus row counts to
+  `backups/` (ignored by git). Restore steps are in `docs/DEPLOYMENT.md`.
+- The comment-moderation question is settled by design, not by code: reviews and new posts wait for
+  approval, replies inside a post publish immediately and are hidden afterwards. `docs/ARCHITECTURE.md`
+  said otherwise and now matches `guard_comment`.
+
 - All **34 selected institutions** are researched and imported: **33 published**, **Genius.kg Tokmok draft** by explicit owner instruction. An additional historical AIM Balykchy candidate is preserved as a draft, superseded by Birinchi Mugalim in the selected Issyk-Kul batch. Thus import-state has35 historical entries, not35 selected institutions.
 - **87 actual sourced image assets** are stored; **28 selected institutions have a logo and two images**. The six incomplete media sets include the intentionally unverified Genius draft; the five published gaps are Happy Kids, Raduga Tokmok, AALAM Tokmok, Amir Tokmok and Diplomat's missing logo. Missing public contacts/programs/teaching languages remain explicit, not invented. Some genuine school video covers are captioned as such.
 - Happy Kids uses the most documented Bakaev141 kindergarten listing under the owner's branch-selection preference; it is published as unverified, with current operating status and media gaps disclosed. Indigo West's school identity was resolved; incorrect kindergarten contacts were cleared and independently verified as NULL.

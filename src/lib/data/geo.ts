@@ -1,6 +1,7 @@
 import "server-only";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { I18nText } from "@/lib/i18n/localized";
+import { fetchAllRows } from "./paging";
 
 export type ProvinceData = { id: string; slug: string; name: I18nText; description: I18nText; sort_order: number };
 export type CityData = {
@@ -36,12 +37,11 @@ export async function getProvince(slug: string): Promise<ProvinceData | null> {
 }
 
 export async function schoolCountsByCity(): Promise<Record<string, number>> {
-  const { data } = await createPublicClient()
-    .from("schools")
-    .select("cities!inner(slug)")
-    .eq("status", "published");
+  const rows = await fetchAllRows<{ cities: { slug: string } }>(() =>
+    createPublicClient().from("schools").select("cities!inner(slug)").eq("status", "published")
+  );
   const counts: Record<string, number> = {};
-  for (const row of (data ?? []) as unknown as { cities: { slug: string } }[]) {
+  for (const row of rows) {
     counts[row.cities.slug] = (counts[row.cities.slug] ?? 0) + 1;
   }
   return counts;

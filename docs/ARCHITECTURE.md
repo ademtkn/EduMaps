@@ -44,15 +44,17 @@ Key behaviours (all in SQL, migrations `…03` and `…04`):
 
 - `handle_new_user` mirrors `auth.users` into `users` + `profiles`; role is never read from client metadata.
 - `guard_review` / `guard_post` / `guard_comment` force `pending`, strip forged moderation fields, enforce per-user limits, reject spam and duplicate bodies, and send edited content back to moderation.
+  **Exception, by design:** a *comment* (a reply inside a post) is published immediately and staff hide it afterwards; only reviews and new posts wait for approval. See `guard_comment` in `20260101000003_functions_triggers.sql` and the Community note in `README.md`.
 - Rating aggregates, helpful counts, reply counts and `has_sports` are maintained by triggers (system-write flag protects counters from client writes).
 - `log_audit` records user-attributed changes with a field-level diff.
 - RLS: visitors read published content; members write only their own rows; staff moderate; admins manage everything. `admin_save_school(jsonb)` saves a school and all children in one transaction.
-- Analytics: `track_event`, `track_ad_event` (security definer, anonymous), `admin_*` RPCs for dashboards.
+- Analytics: `track_event`, `track_ad_event` (security definer, executable by `service_role` only — `/api/track` calls them after its same-origin check and rate limit), `admin_*` RPCs for dashboards.
 
 ## Moderation flow
 
 ```
-member submits → status = pending (forced by trigger)
+member submits a review or a post → status = pending (forced by trigger)
+member writes a reply → published immediately; staff hide it if needed
   → moderator/admin: approve → published (counters update, public cache revalidated)
                       reject  → rejected (note shown to author in dashboard)
                       hide / flag / edit / delete

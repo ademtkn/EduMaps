@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createPublicClient } from "@/lib/supabase/public";
+import { createServiceClient } from "@/lib/supabase/admin";
 import { isSameOrigin } from "@/lib/security/origin";
 import { clientIp, rateLimit } from "@/lib/security/rate-limit";
 
@@ -34,7 +34,8 @@ export async function POST(request: Request) {
   const meta = allowed && parsed.data.meta && allowed.includes(parsed.data.meta) ? parsed.data.meta : undefined;
   if ((parsed.data.type === "contact_click" || parsed.data.type === "section_view" || parsed.data.type === "time_on_page") && !meta) return NextResponse.json({ ok: false }, { status: 400 });
   if (["school_view", "contact_click", "section_view", "time_on_page", "compare_add"].includes(parsed.data.type) && !id) return NextResponse.json({ ok: false }, { status: 400 });
-  const db = createPublicClient({ fresh: true });
+  // Only the service role may call the two RPCs now; the public key cannot inflate counters on its own.
+  const db = createServiceClient();
   if (type === "ad_impression") {
     if (!id) return NextResponse.json({ ok: false }, { status: 400 });
     await db.rpc("track_ad_event", { p_ad: id, p_event: "impression", p_lang: lang });

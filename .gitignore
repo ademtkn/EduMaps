@@ -15,3 +15,6 @@ private
 
 # Research and registry data (institution contacts, source manifests) stay local
 data/
+
+# Local database dumps (personal data)
+backups/
