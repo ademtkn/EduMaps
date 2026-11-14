@@ -6,7 +6,7 @@ import type { Lang } from "@/lib/i18n/config";
 import type { MapSchool, ReviewData, SchoolCardData, SchoolDetail } from "./types";
 
 const CARD_SELECT =
-  "id,slug,name,tagline,logo_url,cover_url,rating_avg,rating_count,school_type,education_systems,has_transportation,has_boarding,has_sports,tuition_min,tuition_max,fee_min,fee_max,fee_period,fee_billing_months,opening_time,closing_time,working_days,grade_from,grade_to,updated_at,data_status," +
+  "id,slug,name,tagline,logo_url,cover_url,rating_avg,rating_count,school_type,institution_kind,education_systems,has_transportation,has_boarding,has_sports,tuition_min,tuition_max,fee_min,fee_max,fee_period,fee_billing_months,opening_time,closing_time,working_days,grade_from,grade_to,updated_at,data_status," +
   "cities!inner(slug,name,provinces!inner(slug,name)),school_languages(language_code,is_primary)";
 
 export const PAGE_SIZE = 12;
@@ -30,6 +30,8 @@ export type SchoolFilters = {
   boarding?: boolean;
   sports?: boolean;
   type?: string;
+  /** school, kindergarten, college or madrasa */
+  kind?: string;
   sort?: SchoolSort;
   page?: number;
   pageSize?: number;
@@ -70,6 +72,7 @@ export async function listSchools(filters: SchoolFilters): Promise<{ items: Scho
   if (filters.province) query = query.eq("cities.provinces.slug", filters.province);
   if (filters.systems?.length) query = query.overlaps("education_systems", filters.systems);
   if (filters.type) query = query.eq("school_type", filters.type as SchoolCardData["school_type"]);
+  if (filters.kind) query = query.eq("institution_kind", filters.kind);
   if (filters.grade !== undefined) query = query.lte("grade_from", filters.grade).gte("grade_to", filters.grade);
   if (filters.tuitionMin !== undefined) query = query.gte("tuition_max", filters.tuitionMin);
   if (filters.tuitionMax !== undefined) query = query.lte("tuition_min", filters.tuitionMax);
@@ -220,15 +223,15 @@ export async function getMapSchools(): Promise<MapSchool[]> {
   const { data, error } = await db
     .from("schools")
     .select(
-      "id,slug,name,logo_url,rating_avg,rating_count,tuition_min,tuition_max,school_type,education_systems,grade_from,grade_to,has_transportation,has_boarding,has_sports,cities!inner(slug),school_languages(language_code),school_locations!inner(lat,lng,address)"
+      "id,slug,name,logo_url,rating_avg,rating_count,tuition_min,tuition_max,school_type,institution_kind,education_systems,grade_from,grade_to,has_transportation,has_boarding,has_sports,cities!inner(slug),school_languages(language_code),school_locations!inner(lat,lng,address)"
     )
     .eq("status", "published")
     .not("school_locations.lat", "is", null);
   if (error) throw new Error(`getMapSchools failed: ${error.message}`);
   type Row = {
     id: string; slug: string; name: MapSchool["name"]; logo_url: string | null; rating_avg: number; rating_count: number;
-    tuition_min: number | null; tuition_max: number | null; school_type: string; education_systems: string[];
-    grade_from: number; grade_to: number; has_transportation: boolean; has_boarding: boolean; has_sports: boolean;
+    tuition_min: number | null; tuition_max: number | null; school_type: string; institution_kind: string; education_systems: string[];
+    grade_from: number | null; grade_to: number | null; has_transportation: boolean; has_boarding: boolean; has_sports: boolean;
     cities: { slug: string }; school_languages: { language_code: string }[];
     school_locations: { lat: number; lng: number; address: MapSchool["address"] } | { lat: number; lng: number; address: MapSchool["address"] }[];
   };
@@ -236,7 +239,7 @@ export async function getMapSchools(): Promise<MapSchool[]> {
     const loc = Array.isArray(r.school_locations) ? r.school_locations[0]! : r.school_locations;
     return {
       id: r.id, slug: r.slug, name: r.name, logo_url: r.logo_url, rating_avg: r.rating_avg, rating_count: r.rating_count,
-      tuition_min: r.tuition_min, tuition_max: r.tuition_max, school_type: r.school_type,
+      tuition_min: r.tuition_min, tuition_max: r.tuition_max, school_type: r.school_type, institution_kind: r.institution_kind,
       education_systems: r.education_systems, grade_from: r.grade_from, grade_to: r.grade_to,
       has_transportation: r.has_transportation, has_boarding: r.has_boarding, has_sports: r.has_sports,
       city_slug: r.cities.slug, languages: r.school_languages.map((l) => l.language_code),

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { E2E_NAME, E2E_SCHOOL } from "./fixtures/schools";
 
 test.describe("search suggestions", () => {
   test("typing shows matching schools and cities, and the keyboard picks one", async ({ page }) => {
@@ -6,14 +7,14 @@ test.describe("search suggestions", () => {
     const box = page.getByRole("combobox", { name: "School name" });
     await box.fill("A");
     await expect(page.getByRole("listbox")).toHaveCount(0);
-    await box.fill("Ala-Too");
-    const option = page.getByRole("option", { name: /Ala-Too International School/ });
+    await box.fill("E2E Ala-Too");
+    const option = page.getByRole("option", { name: E2E_NAME.alaToo });
     await expect(option).toBeVisible();
     await expect(box).toHaveAttribute("aria-expanded", "true");
     await box.press("ArrowDown");
     await expect(option).toHaveAttribute("aria-selected", "true");
     await box.press("Enter");
-    await expect(page).toHaveURL(/\/en\/schools\/ala-too-international-school$/);
+    await expect(page).toHaveURL(new RegExp(`/en/schools/${E2E_SCHOOL.alaToo}$`));
   });
 
   test("a city suggestion opens the directory for that city; Escape closes the list; Enter without a choice still searches", async ({ page }) => {
@@ -48,8 +49,8 @@ test.describe("search suggestions", () => {
       const data = await response.json();
       expect(Array.isArray(data.schools) && Array.isArray(data.cities)).toBeTruthy();
     }
-    const data = await (await request.get("/api/search/suggest?lang=en&q=ala-too")).json();
-    expect(data.schools[0]).toEqual({ slug: "ala-too-international-school", name: "Ala-Too International School", city: "Bishkek" });
+    const data = await (await request.get("/api/search/suggest?lang=en&q=e2e-ala-too")).json();
+    expect(data.schools[0]).toEqual({ slug: E2E_SCHOOL.alaToo, name: E2E_NAME.alaToo, city: "Bishkek" });
   });
 });
 

@@ -14,7 +14,7 @@ import { FacilityIcon } from "@/components/schools/facility-icons";
 import { CorrectionDialog } from "@/components/schools/correction-dialog";
 import { FeeCoverage } from "@/components/schools/fee-coverage";
 import { FavoriteButton } from "@/components/schools/favorite-button";
-import { SchoolCard, gradeRange } from "@/components/schools/school-card";
+import { SchoolCard, gradeRange, schoolLogoClass } from "@/components/schools/school-card";
 import { ReportCard } from "@/components/schools/report-card";
 import { SchoolGallery } from "@/components/schools/school-gallery";
 import { GradeBadge } from "@/components/ui/grade-badge";
@@ -190,7 +190,7 @@ export default async function SchoolPage({ params }: Props) {
             <div className="flex items-start gap-4 sm:gap-5">
               <div className="size-20 shrink-0 overflow-hidden rounded-2xl border-2 border-white bg-white shadow-lift sm:size-24">
                 {school.logo_url ? (
-                  <MediaImage src={school.logo_url} alt="" width={96} height={96} priority className="size-full object-cover" />
+                  <MediaImage src={school.logo_url} alt="" width={96} height={96} priority className={schoolLogoClass(school.slug)} />
                 ) : (
                   <span className="flex size-full items-center justify-center bg-brand-700 text-display font-bold text-white">{name.charAt(0)}</span>
                 )}
@@ -198,6 +198,7 @@ export default async function SchoolPage({ params }: Props) {
               <div>
                 <div className="mb-2 flex flex-wrap gap-2">
                   <Badge tone="outline" className="border-white/0 bg-white/95">{types[school.school_type]}</Badge>
+                  {school.institution_kind && school.institution_kind !== "school" ? <Badge tone="outline" className="border-white/0 bg-white/95">{dict.schools.kinds[school.institution_kind]}</Badge> : null}
                   {school.education_systems.map((s) => <Badge key={s} tone="leaf" className="bg-leaf-50/95">{systems[s]}</Badge>)}
                 </div>
                 <h1 className="text-h1 font-bold text-white sm:text-[2.5rem]">{name}</h1>
@@ -238,6 +239,7 @@ export default async function SchoolPage({ params }: Props) {
             <div className="mb-6"><ReportCard dict={dict} score={school.rating_avg} count={school.rating_count} categories={categoryScores} /></div>
             <dl className="grid gap-3 sm:grid-cols-2">
               {school.data_status !== "unverified" ? <Fact icon={<GraduationCap />} label={dict.school.grades} value={gradeRange(dict, school.grade_from, school.grade_to)} /> : null}
+              <Fact icon={<SchoolIcon />} label={dict.schools.kind} value={dict.schools.kinds[school.institution_kind ?? "school"]} />
               <Fact icon={<SchoolIcon />} label={dict.schools.type} value={types[school.school_type]} />
               {formatSchedule(school, lang) ? <Fact icon={<Clock />} label={dict.school.schoolDay} value={formatSchedule(school, lang)!} /> : null}
               {school.founded_year ? <Fact icon={<CalendarDays />} label={dict.school.founded} value={school.founded_year} /> : null}
@@ -269,6 +271,7 @@ export default async function SchoolPage({ params }: Props) {
 
           <Section id="languages" title={dict.school.languages}>
             <div className="flex flex-wrap gap-2">
+              {!languages.length ? <p className="text-small text-ink-600">{dict.school.infoPending}</p> : null}
               {languages.map((l) => (
                 <Badge key={l.language_code} tone={l.is_primary ? "brand" : "neutral"} className="px-3 py-1 text-small">
                   {langNames[l.language_code] ?? l.language_code}{l.is_primary ? ` · ${dict.school.primaryLanguage}` : ""}

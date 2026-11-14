@@ -5,7 +5,7 @@ const PASSWORD = "Passw0rd-e2e!";
 
 async function login(page: Page, who: { email: string; password: string }, next = "/en/dashboard") {
   await page.goto(`/en/auth/login?next=${encodeURIComponent(next)}`);
-  await page.getByLabel("Email").fill(who.email);
+  await page.getByLabel("Username or email").fill(who.email);
   await page.getByLabel("Password", { exact: true }).fill(who.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL((u) => !u.pathname.includes("/auth/login"));
@@ -77,6 +77,7 @@ test.describe("home page: schools and sponsored card", () => {
 
 test.describe.serial("home page: what people say about the site", () => {
   const email = `e2e-voice-${Date.now()}@example.com`;
+  const username = `e2e_voice_${Date.now()}`;
   const opinion = `EduMaps.kg helped us compare three schools in an evening. Reference ${Date.now()}.`;
 
   test("the section shows opinions marked as samples, and rotates every 15 seconds", async ({ page }) => {
@@ -101,7 +102,8 @@ test.describe.serial("home page: what people say about the site", () => {
     await expect(page.getByText("Please sign in to share your opinion")).toBeVisible();
 
     await page.goto("/en/auth/register");
-    await page.getByLabel("Display name").fill("E2E Voice");
+    await page.getByRole("button", { name: "Continue with email" }).click();
+    await page.getByLabel("Username", { exact: true }).fill(username);
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
     await page.getByRole("checkbox", { name: /at least 16/ }).check();
@@ -132,7 +134,7 @@ test.describe.serial("home page: what people say about the site", () => {
     await login(page, ADMIN, "/admin/testimonials");
     await page.goto("/admin/testimonials");
     const card = page.locator("div.p-5").filter({ hasText: opinion });
-    await expect(card.getByText("E2E Voice")).toBeVisible();
+    await expect(card.getByText(username)).toBeVisible();
     await card.getByRole("button", { name: "Show on home page" }).click();
     await expect(card).toHaveCount(0);
 

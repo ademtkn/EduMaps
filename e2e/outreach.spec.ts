@@ -5,7 +5,7 @@ const MODERATOR = { email: "moderator@edumap.kg", password: ADMIN.password };
 
 async function login(page: Page, who: { email: string; password: string }, next: string) {
   await page.goto(`/en/auth/login?next=${encodeURIComponent(next)}`);
-  await page.getByLabel("Email").fill(who.email);
+  await page.getByLabel("Username or email").fill(who.email);
   await page.getByLabel("Password", { exact: true }).fill(who.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL((u) => !u.pathname.includes("/auth/login"));

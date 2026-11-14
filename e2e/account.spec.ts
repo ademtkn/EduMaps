@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import en from "../src/lib/i18n/dictionaries/en.json";
 
 const MAIL = process.env.E2E_MAIL_URL ?? "http://127.0.0.1:56324";
 const PASSWORD = "Passw0rd-e2e!";
@@ -15,9 +16,10 @@ async function mailTo(address: string, subjectPart?: string): Promise<string> {
 }
 const callbackLink = (html: string) => (/href="([^"]*\/api\/auth\/callback[^"]*)"/.exec(html)?.[1] ?? "").replaceAll("&amp;", "&");
 
-async function register(page: Page, email: string, name = "E2E Account") {
+async function register(page: Page, email: string) {
   await page.goto("/en/auth/register");
-  await page.getByLabel("Display name").fill(name);
+  await page.getByRole("button", { name: "Continue with email" }).click();
+  await page.getByLabel("Username", { exact: true }).fill(`e2e_account_${Date.now()}`);
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
   await page.getByRole("checkbox", { name: /at least 16/ }).check();
@@ -27,7 +29,7 @@ async function register(page: Page, email: string, name = "E2E Account") {
 
 async function signIn(page: Page, email: string, password: string) {
   await page.goto("/en/auth/login");
-  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Username or email").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL(/\/en\/dashboard/);
@@ -75,10 +77,10 @@ test.describe.serial("account", () => {
 
   test("the old password stops working and the new one signs in", async ({ page }) => {
     await page.goto("/en/auth/login");
-    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Username or email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page.getByText("Incorrect email or password.")).toBeVisible();
+    await expect(page.getByText(en.auth.invalidCredentials)).toBeVisible();
     await page.getByLabel("Password", { exact: true }).fill(newPassword);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await page.waitForURL(/\/en\/dashboard/);
@@ -106,7 +108,7 @@ test.describe.serial("account settings", () => {
   const changed = "ChangedPassw0rd-e2e!";
 
   test("password change checks the current password", async ({ page }) => {
-    await register(page, email, "E2E Settings");
+    await register(page, email);
     await page.goto("/en/dashboard?tab=account");
     await page.getByLabel("Current password").first().fill("wrong-password1");
     await page.getByLabel("New password", { exact: true }).fill(changed);
@@ -156,10 +158,10 @@ test.describe.serial("account settings", () => {
     await expect(page.getByText(/Your account was deleted/)).toBeVisible();
 
     await page.goto("/en/auth/login");
-    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Username or email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill(changed);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page.getByText("Incorrect email or password.")).toBeVisible();
+    await expect(page.getByText(en.auth.invalidCredentials)).toBeVisible();
   });
 
   test("anonymous visitors cannot download data", async ({ request }) => {

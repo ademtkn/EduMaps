@@ -183,6 +183,8 @@
     "anyGrade": "Any grade",
     "type": "School type",
     "anyType": "Any type",
+    "kind": "Institution",
+    "anyKind": "Any institution",
     "amenities": "Amenities",
     "transport": "School transportation",
     "sports": "Sports programs",
@@ -208,6 +210,12 @@
       "private": "Private",
       "international": "International",
       "specialized": "Specialized"
+    },
+    "kinds": {
+      "school": "School",
+      "kindergarten": "Kindergarten",
+      "college": "College",
+      "madrasa": "Madrasa"
     },
     "systems": {
       "national": "National curriculum",
@@ -546,7 +554,7 @@
     "signUp": "Create account",
     "noAccount": "No account yet?",
     "haveAccount": "Already have an account?",
-    "invalidCredentials": "Incorrect email or password.",
+    "invalidCredentials": "Incorrect username, email or password.",
     "emailTaken": "An account with this email already exists.",
     "registered": "Account created. Welcome to EduMaps.kg!",
     "checkEmail": "Check your inbox and confirm your email address to finish signing up.",
@@ -576,7 +584,18 @@
     "linkInvalid": "This link is invalid or has expired. Please try again.",
     "emailConfirmed": "Your email address is confirmed. Welcome!",
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "identifier": "Username or email",
+    "username": "Username",
+    "usernameHint": "3–30 characters: Latin letters, numbers, periods or underscores. Your username is public and can be used to sign in.",
+    "continueGoogle": "Continue with Google",
+    "continueApple": "Continue with Apple",
+    "continueEmail": "Continue with email",
+    "or": "or",
+    "oauthUnavailable": "This sign-in option is not available yet. Please use your username or email and password.",
+    "oauthError": "We could not complete sign-in. Please try again.",
+    "oauthCancelled": "Sign-in was cancelled. You can try again or choose another option.",
+    "oauthConsentRequired": "Please accept the Terms of Use and Privacy Policy, then try signing in again."
   },
   "dashboard": {
     "title": "My dashboard",
@@ -667,7 +686,12 @@
     "same_password": "Choose a password that is different from the current one.",
     "staff_cannot_self_delete": "Administrator and moderator accounts cannot be deleted here. Ask another administrator.",
     "password_mismatch": "The passwords do not match.",
-    "contact_needed": "School staff: please leave an email or a phone number."
+    "contact_needed": "School staff: please leave an email or a phone number.",
+    "username_invalid": "Use 3–30 Latin letters, numbers, periods or underscores, starting with a letter or number.",
+    "username_reserved": "This username is reserved. Please choose another.",
+    "username_taken": "This username is already taken. Please choose another.",
+    "invalid_identifier": "Enter a valid username or email address.",
+    "reauthentication_required": "Sign in again with Google or Apple, then return here to delete your account."
   },
   "grades": {
     "reportCard": "Report card",
@@ -749,7 +773,11 @@
     "deleteText": "This permanently deletes your account together with your reviews, posts, comments and saved items. It cannot be undone.",
     "deleteUnderstand": "I understand that this cannot be undone.",
     "deleteButton": "Delete my account",
-    "deleted": "Your account was deleted. Goodbye, and thank you for helping other families."
+    "deleted": "Your account was deleted. Goodbye, and thank you for helping other families.",
+    "socialAccountTitle": "Connected account",
+    "socialAccountText": "You sign in with Google or Apple. Manage your email and sign-in settings with that provider.",
+    "deleteSocialHint": "For security, sign in again with Google or Apple before deleting your account if your last sign-in was more than 10 minutes ago.",
+    "signInAgain": "Sign in again"
   },
   "corrections": {
     "cta": "Report incorrect information",

@@ -7,6 +7,7 @@ import { feeLabels, formatFee, formatMonthlyEquivalent } from "@/lib/fees";
 import type { Dictionary } from "@/lib/i18n/get-dictionary";
 import { tr } from "@/lib/i18n/localized";
 import { formatSchedule } from "@/lib/schedule";
+import { cn } from "@/lib/utils";
 import type { SchoolCardData } from "@/lib/data/types";
 import { CompareButton } from "@/components/compare/compare-button";
 import { Badge } from "@/components/ui/badge";
@@ -14,13 +15,20 @@ import { MediaImage } from "@/components/ui/media-image";
 import { GradeBadge } from "@/components/ui/grade-badge";
 import { FavoriteButton } from "./favorite-button";
 
-export function gradeRange(dict: Dictionary, from: number, to: number) {
+export function gradeRange(dict: Dictionary, from: number | null, to: number | null) {
+  if (from == null || to == null) return dict.school.infoPending;
+  if (from === 0 && to === 0) return dict.common.preschoolGrade;
   return fmt(dict.common.grades, { from, to });
 }
 
 /** Grade range, or a "pending" label for profiles whose details have not been confirmed with the school. */
-export function gradeRangeFor(dict: Dictionary, school: { data_status: string; grade_from: number; grade_to: number }) {
+export function gradeRangeFor(dict: Dictionary, school: { data_status: string; grade_from: number | null; grade_to: number | null }) {
   return school.data_status === "unverified" ? dict.school.infoPending : gradeRange(dict, school.grade_from, school.grade_to);
+}
+
+/** Keep wide marks intact; Intellect's official white mark needs a dark frame for contrast. */
+export function schoolLogoClass(slug: string) {
+  return cn("size-full object-contain p-1", slug === "intellect-pro-school" && "bg-brand-900");
 }
 
 export function SchoolCard({ school, lang, dict, priority = false, rank }: { school: SchoolCardData; lang: Lang; dict: Dictionary; priority?: boolean; rank?: number }) {
@@ -46,6 +54,7 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
         <div className="absolute left-3 top-3 flex items-center gap-2">
           {rank && school.rating_count > 0 ? <span className="rounded-lg bg-brand-900/90 px-2.5 py-1 text-small font-extrabold text-white shadow-sm backdrop-blur">{fmt(dict.rankings.rank, { n: rank })}</span> : null}
           <Badge tone="outline" className="border-white/0 bg-white/95 shadow-sm">{types[school.school_type]}</Badge>
+          {school.institution_kind && school.institution_kind !== "school" ? <Badge tone="outline" className="border-white/0 bg-white/95 shadow-sm">{dict.schools.kinds[school.institution_kind]}</Badge> : null}
         </div>
         {school.data_status !== "verified" ? (
           <span className="absolute bottom-3 left-3 rounded-md bg-warning-50/95 px-2 py-0.5 text-caption font-semibold text-warning-700 shadow-sm">
@@ -65,7 +74,7 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
       <div className="relative flex flex-1 flex-col px-5 pb-5 pt-9">
         <div className="absolute -top-7 left-5 size-14 overflow-hidden rounded-xl border-2 border-white bg-white shadow-card">
           {school.logo_url ? (
-            <MediaImage src={school.logo_url} alt="" width={56} height={56} className="size-full object-cover" />
+            <MediaImage src={school.logo_url} alt="" width={56} height={56} className={schoolLogoClass(school.slug)} />
           ) : (
             <span className="flex size-full items-center justify-center bg-brand-700 text-h3 font-bold text-white">{name.charAt(0)}</span>
           )}

@@ -10,6 +10,7 @@ export type SearchParams = Record<string, string | string[] | undefined>;
 const SYSTEMS = { has: (v: string) => /^[a-z0-9_]{1,40}$/.test(v) };
 const LANGS = { has: (v: string) => /^[a-z]{2,3}$/.test(v) };
 const TYPES = new Set(["public", "private", "international", "specialized"]);
+const KINDS = new Set(["school", "kindergarten", "college", "madrasa"]);
 
 function many(value: string | string[] | undefined, allowed: { has: (v: string) => boolean }): string[] {
   const list = Array.isArray(value) ? value : value ? [value] : [];
@@ -27,6 +28,7 @@ export function parseSchoolSearch(sp: SearchParams, lang: Lang, locked: Partial<
   const tmin = toInt(firstParam(sp.tmin));
   const tmax = toInt(firstParam(sp.tmax));
   const type = firstParam(sp.type);
+  const kind = firstParam(sp.kind);
   const city = firstParam(sp.city);
   const effectiveCity = locked.city ?? (city && /^[a-z0-9-]+$/.test(city) ? city : undefined);
   const district = firstParam(sp.district);
@@ -48,6 +50,7 @@ export function parseSchoolSearch(sp: SearchParams, lang: Lang, locked: Partial<
     boarding: firstParam(sp.boarding) === "1",
     sports: firstParam(sp.sports) === "1",
     type: type && TYPES.has(type) ? type : undefined,
+    kind: kind && KINDS.has(kind) ? kind : undefined,
     sort,
     page: Math.max(1, Math.min(toInt(firstParam(sp.page)) ?? 1, 500)),
   };
@@ -68,5 +71,6 @@ export function activeFilterCount(f: SchoolFilters, locked: Partial<SchoolFilter
     f.boarding ? 1 : undefined,
     f.sports ? 1 : undefined,
     f.type,
+    f.kind,
   ].filter(Boolean).length;
 }

@@ -21,12 +21,14 @@ export default async function Page({ params, searchParams }: Props) {
   const { lang } = await params;
   if (!isLang(lang)) notFound();
   const [dict, sp] = await Promise.all([getDictionary(lang), searchParams]);
+  const error = firstParam(sp.error);
+  const errors: Record<string, string> = { oauth: dict.auth.oauthError, oauth_cancelled: dict.auth.oauthCancelled, oauth_consent: dict.auth.oauthConsentRequired };
   return (
     <div className="container-page flex justify-center py-12 sm:py-16">
       <div className="w-full max-w-md">
         <h1 className="text-h1 font-bold">{dict.auth.loginTitle}</h1>
         <p className="mb-8 mt-2 text-body text-ink-600">{dict.auth.loginSubtitle}</p>
-        {firstParam(sp.error) ? <Alert tone="warning" className="mb-5">{dict.auth.linkInvalid}</Alert> : null}
+        {error ? <Alert tone="warning" className="mb-5">{errors[error] ?? dict.auth.linkInvalid}</Alert> : null}
         <Card><CardBody><LoginForm next={firstParam(sp.next)} /></CardBody></Card>
       </div>
     </div>

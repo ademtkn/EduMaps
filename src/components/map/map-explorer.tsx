@@ -26,10 +26,10 @@ type CityOption = { slug: string; name: string };
 
 
 type Filters = {
-  q: string; city: string; system: string; language: string; grade: string; maxTuition: string;
+  q: string; city: string; kind: string; system: string; language: string; grade: string; maxTuition: string;
   transport: boolean; boarding: boolean; sports: boolean;
 };
-const EMPTY: Filters = { q: "", city: "", system: "", language: "", grade: "", maxTuition: "", transport: false, boarding: false, sports: false };
+const EMPTY: Filters = { q: "", city: "", kind: "", system: "", language: "", grade: "", maxTuition: "", transport: false, boarding: false, sports: false };
 
 export function MapExplorer({ schools, cities, token, unmapped = 0 }: { schools: MapSchool[]; cities: CityOption[]; token: string; unmapped?: number }) {
   const dict = useDict();
@@ -50,9 +50,10 @@ export function MapExplorer({ schools, cities, token, unmapped = 0 }: { schools:
       .filter((s) => {
         if (q && !`${s.name?.kg ?? ""} ${s.name?.ru ?? ""} ${s.name?.en ?? ""}`.toLowerCase().includes(q)) return false;
         if (filters.city && s.city_slug !== filters.city) return false;
+        if (filters.kind && s.institution_kind !== filters.kind) return false;
         if (filters.system && !s.education_systems.includes(filters.system)) return false;
         if (filters.language && !s.languages.includes(filters.language)) return false;
-        if (grade !== null && !(s.grade_from <= grade && s.grade_to >= grade)) return false;
+        if (grade !== null && !(s.grade_from != null && s.grade_to != null && s.grade_from <= grade && s.grade_to >= grade)) return false;
         if (maxTuition !== null && (s.tuition_min ?? 0) > maxTuition) return false;
         if (filters.transport && !s.has_transportation) return false;
         if (filters.boarding && !s.has_boarding) return false;
@@ -93,6 +94,10 @@ export function MapExplorer({ schools, cities, token, unmapped = 0 }: { schools:
         <Select aria-label={dict.schools.city} value={filters.city} onChange={(e) => set("city", e.target.value)}>
           <option value="">{dict.schools.allCities}</option>
           {cities.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+        </Select>
+        <Select aria-label={dict.schools.kind} value={filters.kind} onChange={(e) => set("kind", e.target.value)}>
+          <option value="">{dict.schools.anyKind}</option>
+          {(["school", "kindergarten", "college", "madrasa"] as const).map((k) => <option key={k} value={k}>{dict.schools.kinds[k]}</option>)}
         </Select>
         <Select aria-label={dict.schools.grade} value={filters.grade} onChange={(e) => set("grade", e.target.value)}>
           <option value="">{dict.schools.anyGrade}</option>

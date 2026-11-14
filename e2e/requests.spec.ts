@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
+import { E2E_SCHOOL } from "./fixtures/schools";
 
 const ADMIN = { email: process.env.SEED_ADMIN_EMAIL ?? "admin@edumap.kg", password: process.env.SEED_ADMIN_PASSWORD ?? "EduMap-Admin-2026!" };
-const SCHOOL = "chu-valley-lyceum";
+const SCHOOL = E2E_SCHOOL.chuValley;
 const MAIL = process.env.E2E_MAIL_URL ?? "http://127.0.0.1:56324";
 
 /** The team notification for a submission lands in the local mail catcher; returns its plain text body. */
@@ -23,7 +24,7 @@ const RUN = Date.now();
 
 async function login(page: Page, who: { email: string; password: string }, next = "/en/dashboard") {
   await page.goto(`/en/auth/login?next=${encodeURIComponent(next)}`);
-  await page.getByLabel("Email").fill(who.email);
+  await page.getByLabel("Username or email").fill(who.email);
   await page.getByLabel("Password", { exact: true }).fill(who.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL((u) => !u.pathname.includes("/auth/login"));

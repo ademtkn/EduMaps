@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Download, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { changeEmailAction, changePasswordAction, deleteAccountAction } from "@/lib/actions/account";
@@ -101,7 +102,7 @@ function EmailCard({ email }: { email: string }) {
   );
 }
 
-function DeleteCard() {
+function DeleteCard({ hasPassword }: { hasPassword: boolean }) {
   const dict = useDict();
   const lang = useLang();
   const [formError, setFormError] = useState<string | null>(null);
@@ -110,6 +111,10 @@ function DeleteCard() {
 
   async function onSubmit(values: DeleteAccountInput) {
     setFormError(null);
+    if (hasPassword && !values.password) {
+      form.setError("password", { message: "required" });
+      return;
+    }
     const result = await deleteAccountAction(values);
     if (!result.ok) return setFormError(applyFailure<DeleteAccountInput>(result, form.setError, (c) => errorText(dict, c)) ?? null);
     window.location.assign(`${localizedPath(lang)}?notice=account_deleted`);
@@ -121,9 +126,18 @@ function DeleteCard() {
       <p className="mt-2 max-w-xl text-small text-ink-700">{dict.account.deleteText}</p>
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="mt-4 max-w-md space-y-4">
         {formError ? <Alert tone="danger">{formError}</Alert> : null}
-        <Field label={dict.account.currentPassword} htmlFor="acc-del-pw" error={errorText(dict, errors.password?.message)}>
-          <PasswordInput id="acc-del-pw" autoComplete="current-password" aria-invalid={!!errors.password} {...form.register("password")} />
-        </Field>
+        {hasPassword ? (
+          <Field label={dict.account.currentPassword} htmlFor="acc-del-pw" error={errorText(dict, errors.password?.message)}>
+            <PasswordInput id="acc-del-pw" autoComplete="current-password" aria-invalid={!!errors.password} {...form.register("password")} />
+          </Field>
+        ) : (
+          <div className="space-y-2 text-small text-ink-700">
+            <p>{dict.account.deleteSocialHint}</p>
+            <Link className="inline-block font-semibold text-brand-700 hover:underline" href={`${localizedPath(lang, "/auth/login")}?next=${encodeURIComponent(`${localizedPath(lang, "/dashboard")}?tab=account`)}`}>
+              {dict.account.signInAgain}
+            </Link>
+          </div>
+        )}
         <ConsentCheckbox id="acc-del-ok" label={dict.account.deleteUnderstand} error={errorText(dict, errors.understood?.message)} {...form.register("understood")} />
         <Button type="submit" variant="outline" className="border-danger-600 text-danger-700 hover:bg-danger-50" disabled={isSubmitting}>
           {isSubmitting ? dict.common.loading : dict.account.deleteButton}
@@ -133,18 +147,28 @@ function DeleteCard() {
   );
 }
 
-export function AccountSettings({ email }: { email: string }) {
+export function AccountSettings({ email, hasPassword }: { email: string; hasPassword: boolean }) {
   const dict = useDict();
   return (
     <div className="space-y-6">
-      <PasswordCard />
-      <EmailCard email={email} />
+      {hasPassword ? (
+        <>
+          <PasswordCard />
+          <EmailCard email={email} />
+        </>
+      ) : (
+        <Card><CardBody>
+          <h2 className="text-h3 font-semibold">{dict.account.socialAccountTitle}</h2>
+          <p className="mt-2 max-w-xl text-small text-ink-700">{dict.account.socialAccountText}</p>
+          <p className="mt-2 text-small text-ink-600">{fmt(dict.account.currentEmail, { email })}</p>
+        </CardBody></Card>
+      )}
       <Card><CardBody>
         <h2 className="text-h3 font-semibold">{dict.account.dataTitle}</h2>
         <p className="mt-2 max-w-xl text-small text-ink-700">{dict.account.dataText}</p>
         <Button asChild variant="outline" className="mt-4"><a href="/api/account/export" download><Download />{dict.account.download}</a></Button>
       </CardBody></Card>
-      <DeleteCard />
+      <DeleteCard hasPassword={hasPassword} />
     </div>
   );
 }

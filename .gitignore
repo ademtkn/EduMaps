@@ -12,3 +12,6 @@ supabase/.branches
 test-results
 playwright-report
 private
+
+# Research and registry data (institution contacts, source manifests) stay local
+data/

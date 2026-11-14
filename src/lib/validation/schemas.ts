@@ -12,15 +12,37 @@ const uuid = z.string({ message: "required" }).uuid({ message: "invalid" });
 const honeypot = z.string().max(0, { message: "invalid" }).optional();
 const optionalRating = z.coerce.number().int().min(0).max(5);
 
+/** Public handle: lowercase letters, digits, "_" and "."; 3 to 30 characters. Members can sign in with it. */
+export const USERNAME_PATTERN = /^[a-z0-9][a-z0-9_.]{2,29}$/;
+const RESERVED_USERNAMES = new Set([
+  "admin", "administrator", "moderator", "support", "help", "staff", "team", "official", "root", "system",
+  "edumaps", "edumap", "edumaps.kg", "line", "linekg", "null", "undefined",
+]);
+export const usernameRule = z
+  .string({ message: "required" })
+  .trim()
+  .toLowerCase()
+  .regex(USERNAME_PATTERN, { message: "username_invalid" })
+  .refine((v) => !RESERVED_USERNAMES.has(v), { message: "username_reserved" });
+
+const emailRule = z.string({ message: "required" }).trim().toLowerCase().email({ message: "invalid_email" }).max(254);
+
 export const loginSchema = z.object({
-  email: z.string({ message: "required" }).trim().toLowerCase().email({ message: "invalid_email" }).max(254),
+  /** A username or an email address. */
+  identifier: z
+    .string({ message: "required" })
+    .trim()
+    .toLowerCase()
+    .min(1, { message: "required" })
+    .max(254, { message: "too_long" })
+    .refine((v) => (v.includes("@") ? emailRule.safeParse(v).success : USERNAME_PATTERN.test(v)), { message: "invalid_identifier" }),
   password: z.string({ message: "required" }).min(1, { message: "required" }).max(200),
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  displayName: requiredText(2, 60),
-  email: z.string({ message: "required" }).trim().toLowerCase().email({ message: "invalid_email" }).max(254),
+  username: usernameRule,
+  email: emailRule,
   password: z
     .string({ message: "required" })
     .min(8, { message: "password_weak" })
@@ -39,8 +61,6 @@ const passwordRule = z
   .max(72, { message: "too_long" })
   .regex(/[A-Za-zА-Яа-яЁёҢңӨөҮү]/u, { message: "password_weak" })
   .regex(/\d/, { message: "password_weak" });
-const emailRule = z.string({ message: "required" }).trim().toLowerCase().email({ message: "invalid_email" }).max(254);
-
 export const forgotPasswordSchema = z.object({ email: emailRule, website: honeypot });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
@@ -57,8 +77,9 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export const changeEmailSchema = z.object({ email: emailRule, password: z.string({ message: "required" }).min(1, { message: "required" }).max(200) });
 export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
 
-export const deleteAccountSchema = z.object({ password: z.string({ message: "required" }).min(1, { message: "required" }).max(200), understood: z.literal(true, { message: "required" }) });
-export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+/** `password` is only asked of members who have one; members who signed up with Google or Apple confirm with the checkbox. */
+export const deleteAccountSchema = z.object({ password: z.string().max(200).optional().default(""), understood: z.literal(true, { message: "required" }) });
+export type DeleteAccountInput = z.input<typeof deleteAccountSchema>;
 
 export const FEEDBACK_ROLES = ["parent", "student", "alumni", "teacher", "other"] as const;
 
@@ -144,6 +165,7 @@ export type ReportInput = z.infer<typeof reportSchema>;
 
 export const profileSchema = z.object({
   displayName: requiredText(2, 60),
+  username: usernameRule,
   bio: z.string().trim().max(500, { message: "too_long" }).default(""),
   cityId: z.union([uuid, z.literal("")]).default(""),
   preferredLang: z.enum(LANGS),

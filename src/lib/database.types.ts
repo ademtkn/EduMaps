@@ -405,14 +405,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"bio": string | null,"city_id": string | null,"created_at": string,"display_name": string,"preferred_lang": string,"updated_at": string,"user_id": string
+                    "avatar_url": string | null,"bio": string | null,"city_id": string | null,"created_at": string,"display_name": string,"preferred_lang": string,"updated_at": string,"user_id": string,"username": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"bio"?: string | null,"city_id"?: string | null,"created_at"?: string,"display_name": string,"preferred_lang"?: string,"updated_at"?: string,"user_id": string
+                    "avatar_url"?: string | null,"bio"?: string | null,"city_id"?: string | null,"created_at"?: string,"display_name": string,"preferred_lang"?: string,"updated_at"?: string,"user_id": string,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"bio"?: string | null,"city_id"?: string | null,"created_at"?: string,"display_name"?: string,"preferred_lang"?: string,"updated_at"?: string,"user_id"?: string
+                    "avatar_url"?: string | null,"bio"?: string | null,"city_id"?: string | null,"created_at"?: string,"display_name"?: string,"preferred_lang"?: string,"updated_at"?: string,"user_id"?: string,"username"?: string
                   }
                   Relationships: [
                     {
@@ -727,14 +727,14 @@ isOneToOne: false
                   ]
                 },"schools": {
                   Row: {
-                    "about": Json | null,"avg_class_size": number | null,"boarding_info": Json | null,"city_id": string,"closing_time": string | null,"cover_url": string | null,"created_at": string,"data_status": string,"education_systems": (string)[],"email": string | null,"fee_billing_months": number,"fee_max": number | null,"fee_min": number | null,"fee_period": string,"founded_year": number | null,"grade_from": number,"grade_to": number,"has_boarding": boolean,"has_scholarships": boolean,"has_sports": boolean,"has_transportation": boolean,"id": string,"is_featured": boolean,"logo_url": string | null,"name": NonNullable<Json>,"opening_time": string | null,"phone": string | null,"rating_avg": number,"rating_count": number,"schedule_notes": Json | null,"scholarships": Json | null,"school_type": Database["public"]['Enums']["school_type"],"search_text": string,"slug": string,"social": NonNullable<Json>,"status": Database["public"]['Enums']["publish_status"],"student_count": number | null,"tagline": Json | null,"teacher_count": number | null,"transportation_info": Json | null,"tuition_max": number | null,"tuition_min": number | null,"tuition_notes": Json | null,"updated_at": string,"view_count": number,"website": string | null,"whatsapp": string | null,"working_days": (number)[]
+                    "about": Json | null,"avg_class_size": number | null,"boarding_info": Json | null,"city_id": string,"closing_time": string | null,"cover_url": string | null,"created_at": string,"data_status": string,"education_systems": (string)[],"email": string | null,"fee_billing_months": number,"fee_max": number | null,"fee_min": number | null,"fee_period": string,"founded_year": number | null,"grade_from": number | null,"grade_to": number | null,"has_boarding": boolean,"has_scholarships": boolean,"has_sports": boolean,"has_transportation": boolean,"id": string,"is_featured": boolean,"logo_url": string | null,"name": NonNullable<Json>,"opening_time": string | null,"phone": string | null,"rating_avg": number,"rating_count": number,"schedule_notes": Json | null,"scholarships": Json | null,"school_type": Database["public"]['Enums']["school_type"],"institution_kind": string,"search_text": string,"slug": string,"social": NonNullable<Json>,"status": Database["public"]['Enums']["publish_status"],"student_count": number | null,"tagline": Json | null,"teacher_count": number | null,"transportation_info": Json | null,"tuition_max": number | null,"tuition_min": number | null,"tuition_notes": Json | null,"updated_at": string,"view_count": number,"website": string | null,"whatsapp": string | null,"working_days": (number)[]
                   }
                   ComputedFields: never
                   Insert: {
-                    "about"?: Json | null,"avg_class_size"?: number | null,"boarding_info"?: Json | null,"city_id": string,"closing_time"?: string | null,"cover_url"?: string | null,"created_at"?: string,"data_status"?: string,"education_systems"?: (string)[],"email"?: string | null,"fee_billing_months"?: number,"fee_max"?: number | null,"fee_min"?: number | null,"fee_period"?: string,"founded_year"?: number | null,"grade_from"?: number,"grade_to"?: number,"has_boarding"?: boolean,"has_scholarships"?: boolean,"has_sports"?: boolean,"has_transportation"?: boolean,"id"?: string,"is_featured"?: boolean,"logo_url"?: string | null,"name": NonNullable<Json>,"opening_time"?: string | null,"phone"?: string | null,"rating_avg"?: number,"rating_count"?: number,"schedule_notes"?: Json | null,"scholarships"?: Json | null,"school_type"?: Database["public"]['Enums']["school_type"],"search_text"?: string,"slug": string,"social"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["publish_status"],"student_count"?: number | null,"tagline"?: Json | null,"teacher_count"?: number | null,"transportation_info"?: Json | null,"tuition_max"?: number | null,"tuition_min"?: number | null,"tuition_notes"?: Json | null,"updated_at"?: string,"view_count"?: number,"website"?: string | null,"whatsapp"?: string | null,"working_days"?: (number)[]
+                    "about"?: Json | null,"avg_class_size"?: number | null,"boarding_info"?: Json | null,"city_id": string,"closing_time"?: string | null,"cover_url"?: string | null,"created_at"?: string,"data_status"?: string,"education_systems"?: (string)[],"email"?: string | null,"fee_billing_months"?: number,"fee_max"?: number | null,"fee_min"?: number | null,"fee_period"?: string,"founded_year"?: number | null,"grade_from"?: number | null,"grade_to"?: number | null,"has_boarding"?: boolean,"has_scholarships"?: boolean,"has_sports"?: boolean,"has_transportation"?: boolean,"id"?: string,"is_featured"?: boolean,"logo_url"?: string | null,"name": NonNullable<Json>,"opening_time"?: string | null,"phone"?: string | null,"rating_avg"?: number,"rating_count"?: number,"schedule_notes"?: Json | null,"scholarships"?: Json | null,"school_type"?: Database["public"]['Enums']["school_type"],"institution_kind"?: string,"search_text"?: string,"slug": string,"social"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["publish_status"],"student_count"?: number | null,"tagline"?: Json | null,"teacher_count"?: number | null,"transportation_info"?: Json | null,"tuition_max"?: number | null,"tuition_min"?: number | null,"tuition_notes"?: Json | null,"updated_at"?: string,"view_count"?: number,"website"?: string | null,"whatsapp"?: string | null,"working_days"?: (number)[]
                   }
                   Update: {
-                    "about"?: Json | null,"avg_class_size"?: number | null,"boarding_info"?: Json | null,"city_id"?: string,"closing_time"?: string | null,"cover_url"?: string | null,"created_at"?: string,"data_status"?: string,"education_systems"?: (string)[],"email"?: string | null,"fee_billing_months"?: number,"fee_max"?: number | null,"fee_min"?: number | null,"fee_period"?: string,"founded_year"?: number | null,"grade_from"?: number,"grade_to"?: number,"has_boarding"?: boolean,"has_scholarships"?: boolean,"has_sports"?: boolean,"has_transportation"?: boolean,"id"?: string,"is_featured"?: boolean,"logo_url"?: string | null,"name"?: NonNullable<Json>,"opening_time"?: string | null,"phone"?: string | null,"rating_avg"?: number,"rating_count"?: number,"schedule_notes"?: Json | null,"scholarships"?: Json | null,"school_type"?: Database["public"]['Enums']["school_type"],"search_text"?: string,"slug"?: string,"social"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["publish_status"],"student_count"?: number | null,"tagline"?: Json | null,"teacher_count"?: number | null,"transportation_info"?: Json | null,"tuition_max"?: number | null,"tuition_min"?: number | null,"tuition_notes"?: Json | null,"updated_at"?: string,"view_count"?: number,"website"?: string | null,"whatsapp"?: string | null,"working_days"?: (number)[]
+                    "about"?: Json | null,"avg_class_size"?: number | null,"boarding_info"?: Json | null,"city_id"?: string,"closing_time"?: string | null,"cover_url"?: string | null,"created_at"?: string,"data_status"?: string,"education_systems"?: (string)[],"email"?: string | null,"fee_billing_months"?: number,"fee_max"?: number | null,"fee_min"?: number | null,"fee_period"?: string,"founded_year"?: number | null,"grade_from"?: number | null,"grade_to"?: number | null,"has_boarding"?: boolean,"has_scholarships"?: boolean,"has_sports"?: boolean,"has_transportation"?: boolean,"id"?: string,"is_featured"?: boolean,"logo_url"?: string | null,"name"?: NonNullable<Json>,"opening_time"?: string | null,"phone"?: string | null,"rating_avg"?: number,"rating_count"?: number,"schedule_notes"?: Json | null,"scholarships"?: Json | null,"school_type"?: Database["public"]['Enums']["school_type"],"institution_kind"?: string,"search_text"?: string,"slug"?: string,"social"?: NonNullable<Json>,"status"?: Database["public"]['Enums']["publish_status"],"student_count"?: number | null,"tagline"?: Json | null,"teacher_count"?: number | null,"transportation_info"?: Json | null,"tuition_max"?: number | null,"tuition_min"?: number | null,"tuition_notes"?: Json | null,"updated_at"?: string,"view_count"?: number,"website"?: string | null,"whatsapp"?: string | null,"working_days"?: (number)[]
                   }
                   Relationships: [
                     {
@@ -835,6 +835,12 @@ isOneToOne: false
 "delete_my_account":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"email_for_username":
+{ Args: { "p_username": string }; Returns: string
+                           },
+"generate_username":
+{ Args: { "p_base": string }; Returns: string
+                           },
 "i18n_max_len":
 { Args: { "max_len": number,"value": Json }; Returns: boolean
                            },
@@ -876,6 +882,12 @@ isOneToOne: false
                            },
 "translation_coverage":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"username_available":
+{ Args: { "p_username": string }; Returns: boolean
+                           },
+"user_has_password":
+{ Args: Record<PropertyKey, never>; Returns: boolean
                            }
           }
           Enums: {

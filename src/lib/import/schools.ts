@@ -429,7 +429,7 @@ export function assemble(row: ReadRow, base: SchoolFormValues | null, defaults: 
   const merged = overlay(start, { ...row.partial, ...(creating && !row.partial.slug ? { slug: row.slug } : {}) });
 
   if (creating) {
-    if (!row.partial.grade_from && !row.partial.grade_to) warnings.push("grades not given: using 1 to 11");
+    if (row.partial.grade_from == null && row.partial.grade_to == null) warnings.push("grades not given: not specified");
     if (!row.partial.education_systems) {
       merged.education_systems = ["national"];
       warnings.push("education_systems not given: using “national”");

@@ -56,7 +56,7 @@ export default async function DashboardPage({ params, searchParams }: Props) {
 
   const [dict, profile, favorites] = await Promise.all([
     getDictionary(lang),
-    supabase.from("profiles").select("display_name,bio,city_id,preferred_lang").eq("user_id", userId).single(),
+    supabase.from("profiles").select("display_name,username,bio,city_id,preferred_lang").eq("user_id", userId).single(),
     supabase.from("favorites").select("school_id,article_id").eq("user_id", userId).order("created_at", { ascending: false }),
   ]);
   const favRows = favorites.data ?? [];
@@ -136,7 +136,12 @@ export default async function DashboardPage({ params, searchParams }: Props) {
       </ul>
     ) : <EmptyState icon={<MessageSquare className="size-6" />} title={dict.dashboard.noPosts} action={<Button asChild><Link href={localizedPath(lang, "/community/new")}>{dict.community.newPost}</Link></Button>} />;
   } else if (tab === "account") {
-    body = <AccountSettings email={auth.user.email ?? ""} />;
+    const passwordState = await supabase.rpc("user_has_password");
+    if (passwordState.error || typeof passwordState.data !== "boolean") {
+      body = <Alert tone="danger">{dict.errors.unknown}</Alert>;
+    } else {
+      body = <AccountSettings email={auth.user.email ?? ""} hasPassword={passwordState.data} />;
+    }
   } else {
     const cities = await listCities();
     body = (
@@ -144,6 +149,7 @@ export default async function DashboardPage({ params, searchParams }: Props) {
         cities={cities}
         initial={{
           displayName: profile.data?.display_name ?? "",
+          username: profile.data?.username ?? "",
           bio: profile.data?.bio ?? "",
           cityId: profile.data?.city_id ?? "",
           preferredLang: (profile.data?.preferred_lang as "kg" | "ru" | "en") ?? lang,

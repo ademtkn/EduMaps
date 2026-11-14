@@ -168,11 +168,14 @@ export async function updateProfileAction(input: unknown): Promise<ActionResult>
     .from("profiles")
     .update({
       display_name: parsed.data.displayName,
+      username: parsed.data.username,
       bio: parsed.data.bio || null,
       city_id: parsed.data.cityId || null,
       preferred_lang: parsed.data.preferredLang,
     })
     .eq("user_id", member.user.id);
+  if (error?.code === "23505") return fail("validation", { username: "username_taken" });
   if (error) return fromDatabaseError(error);
+  revalidateTag("public-data");
   return { ok: true };
 }

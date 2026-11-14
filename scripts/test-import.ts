@@ -3,7 +3,7 @@
  *   npm run test:import
  */
 import { EMPTY_SCHOOL } from "../src/lib/admin-defaults";
-import { optionalInt } from "../src/lib/validation/admin";
+import { optionalInt, schoolPayloadSchema } from "../src/lib/validation/admin";
 import { parseCsv, toCsv } from "../src/lib/import/csv";
 import {
   assemble, changedFields, COLUMN_KEYS, daysToText, exampleRows, formToRecord, headerRow, normalizeHeader, overlay, parseBoolean, parseDays, parseDecimal,
@@ -89,6 +89,10 @@ check("only one of latitude and longitude is refused", onlyLat.errors.some((e) =
 check("the plan column accepts free and pro and refuses anything else", readRow({ name_en: "P", plan: "Pro" }, 11, lookups).partial.plan === "pro" && readRow({ name_en: "P", plan: "gold" }, 11, lookups).errors.some((e) => e.startsWith("plan:")));
 const noMap = assemble(readRow({ name_en: "No Map", city: "osh", school_type: "public" }, 6, lookups), null, defaults);
 check("a school without coordinates is allowed, with a warning", noMap.errors.length === 0 && noMap.warnings.some((w) => w.includes("map")));
+const unknownGrades = schoolPayloadSchema.safeParse(noMap.payload);
+check("an unknown grade range stays blank instead of inventing grades 1–11", unknownGrades.success && unknownGrades.data.grade_from === null && unknownGrades.data.grade_to === null);
+const preschool = assemble(readRow({ name_en: "Preschool", city: "bishkek", school_type: "private", grade_from: "0", grade_to: "0" }, 7, lookups), null, defaults);
+check("a kindergarten can cover preschool only without claiming primary grades", preschool.errors.length === 0 && preschool.payload?.grade_from === 0 && preschool.payload?.grade_to === 0, preschool.errors.join("; "));
 check("a free school (fee 0) is allowed", assemble(readRow({ name_en: "Free", city: "osh", school_type: "public", fee_min: "0" }, 7, lookups), null, defaults).errors.length === 0);
 const swapped = assemble(readRow({ name_en: "Range", city: "osh", school_type: "public", fee_min: "500", fee_max: "100" }, 8, lookups), null, defaults);
 check("a maximum fee below the minimum is refused", swapped.errors.some((e) => e.startsWith("fee_max")), swapped.errors.join(" | "));

@@ -4,7 +4,7 @@ const ADMIN = { email: process.env.SEED_ADMIN_EMAIL ?? "admin@edumap.kg", passwo
 
 async function login(page: Page, next: string) {
   await page.goto(`/en/auth/login?next=${encodeURIComponent(next)}`);
-  await page.getByLabel("Email").fill(ADMIN.email);
+  await page.getByLabel("Username or email").fill(ADMIN.email);
   await page.getByLabel("Password", { exact: true }).fill(ADMIN.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL((u) => !u.pathname.includes("/auth/login"));

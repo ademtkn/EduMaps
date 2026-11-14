@@ -13,6 +13,7 @@ import { control, Input, Label, Select } from "@/components/ui/form";
 import { SearchInput } from "./search-input";
 
 const TYPES = ["public", "private", "international", "specialized"] as const;
+const KINDS = ["school", "kindergarten", "college", "madrasa"] as const;
 
 function FilterForm({ cities, hideCity, showDistricts, onDone, formId }: { cities: CityData[]; hideCity?: boolean; showDistricts?: boolean; onDone?: () => void; formId?: string }) {
   const dict = useDict();
@@ -122,6 +123,14 @@ function FilterForm({ cities, hideCity, showDistricts, onDone, formId }: { citie
             {TYPES.map((t) => <option key={t} value={t}>{dict.schools.types[t]}</option>)}
           </Select>
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor={`${uid}-kind`}>{dict.schools.kind}</Label>
+        <Select id={`${uid}-kind`} name="kind" defaultValue={params.get("kind") ?? ""}>
+          <option value="">{dict.schools.anyKind}</option>
+          {KINDS.map((k) => <option key={k} value={k}>{dict.schools.kinds[k]}</option>)}
+        </Select>
       </div>
 
       <fieldset>

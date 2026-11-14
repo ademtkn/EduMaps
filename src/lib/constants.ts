@@ -1,10 +1,13 @@
 export const SCHOOL_TYPES = ["public", "private", "international", "specialized"] as const;
+/** What kind of institution a listing is; school_type describes ownership. */
+export const INSTITUTION_KINDS = ["school", "kindergarten", "college", "madrasa"] as const;
+export type InstitutionKind = (typeof INSTITUTION_KINDS)[number];
 export const AD_PLACEMENTS = ["banner", "sidebar", "featured_article", "home_grid"] as const;
 export const AD_CUSTOMER_TYPES = ["language_school", "summer_camp", "robotics_center", "edu_company", "edu_event", "other"] as const;
 
 /** Allow-list for post-login redirects: same-site relative paths only. */
 export function safeNextPath(next: string | null | undefined, fallback: string): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//") || next.includes("\\") || /^\/[a-z]+:/i.test(next)) return fallback;
+  if (!next || !next.startsWith("/") || next.startsWith("//") || /[\\\u0000-\u0020\u007f]/.test(next) || /^\/[a-z]+:/i.test(next)) return fallback;
   return next;
 }
 

@@ -5,7 +5,7 @@ import type { SchoolFormValues } from "@/components/admin/school-form";
 // Defaults live outside the "use client" form modules so server pages can call them.
 
 export const EMPTY_SCHOOL: SchoolFormValues = {
-  slug: "", name: {}, tagline: {}, about: {}, city_id: "", school_type: "private", education_systems: ["national"], grade_from: 1, grade_to: 11,
+  slug: "", name: {}, tagline: {}, about: {}, city_id: "", school_type: "private", institution_kind: "school", education_systems: ["national"], grade_from: "", grade_to: "",
   founded_year: "", student_count: "", teacher_count: "", avg_class_size: "", opening_time: "", closing_time: "", working_days: [], schedule_notes: {}, fee_min: "", fee_max: "", fee_period: "month", fee_billing_months: 9, tuition_notes: {},
   has_scholarships: false, scholarships: {}, has_transportation: false, transportation_info: {}, has_boarding: false, boarding_info: {},
   phone: "", email: "", website: "", whatsapp: "", social: {}, logo_url: "", cover_url: "", status: "draft", is_featured: false, plan: "free", data_status: "unverified",

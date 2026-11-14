@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AddToCompare, CompareSync, RemoveFromCompare } from "@/components/compare/compare-controls";
-import { gradeRangeFor } from "@/components/schools/school-card";
+import { gradeRangeFor, schoolLogoClass } from "@/components/schools/school-card";
 import { ViewTracker } from "@/components/seo/view-tracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,7 +103,7 @@ export default async function ComparePage({ params, searchParams }: Props) {
                       <th key={s.id} scope="col" className="min-w-52 px-4 py-4 text-left align-top" style={{ width: `${100 / schools.length}%` }}>
                         <div className="flex items-start justify-between gap-2">
                           <div className="size-12 overflow-hidden rounded-xl border border-ink-200 bg-brand-700">
-                            {s.logo_url ? <MediaImage src={s.logo_url} alt="" width={48} height={48} className="size-full object-cover" /> : null}
+                            {s.logo_url ? <MediaImage src={s.logo_url} alt="" width={48} height={48} className={schoolLogoClass(s.slug)} /> : null}
                           </div>
                           <RemoveFromCompare slug={s.slug} current={current} />
                         </div>

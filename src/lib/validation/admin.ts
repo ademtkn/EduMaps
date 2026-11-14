@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AD_CUSTOMER_TYPES, AD_PLACEMENTS, MAX_DOCUMENTS, PLAN_LIMITS, PLANS, SCHOOL_TYPES } from "@/lib/constants";
+import { AD_CUSTOMER_TYPES, AD_PLACEMENTS, MAX_DOCUMENTS, PLAN_LIMITS, PLANS, SCHOOL_TYPES, INSTITUTION_KINDS } from "@/lib/constants";
 import { EXTRA_PERIODS, FEE_PERIODS } from "@/lib/fees";
 import { parseMapLink, type MapService } from "@/lib/map-links";
 import { normalizeWhatsapp } from "@/lib/whatsapp";
@@ -54,9 +54,10 @@ export const schoolPayloadSchema = z
     about: i18nOptional(6000),
     city_id: uuid,
     school_type: z.enum(SCHOOL_TYPES),
+    institution_kind: z.enum(INSTITUTION_KINDS).default("school"),
     education_systems: z.array(optionKey),
-    grade_from: z.coerce.number().int().min(0).max(11),
-    grade_to: z.coerce.number().int().min(1).max(12),
+    grade_from: optionalInt(0, 11),
+    grade_to: optionalInt(0, 12),
     founded_year: optionalInt(1800, 2100),
     student_count: optionalInt(0, 100000),
     teacher_count: optionalInt(0, 10000),
@@ -140,7 +141,7 @@ export const schoolPayloadSchema = z
     if (videos > limits.videos) ctx.addIssue({ code: "custom", path: ["media"], message: `The ${v.plan === "pro" ? "Pro" : "Free"} plan allows ${limits.videos} video${limits.videos === 1 ? "" : "s"}; this school has ${videos}. Remove some, or change the plan.` });
   })
   .refine((v) => !v.opening_time || !v.closing_time || v.closing_time > v.opening_time, { path: ["closing_time"], message: "Closing time must be after opening time" })
-  .refine((v) => v.grade_to >= v.grade_from, { path: ["grade_to"], message: "Last grade must be ≥ first grade" })
+  .refine((v) => v.grade_from == null || v.grade_to == null || v.grade_to >= v.grade_from, { path: ["grade_to"], message: "Last grade must be ≥ first grade" })
   .refine((v) => v.fee_min == null || v.fee_max == null || v.fee_max >= v.fee_min, { path: ["fee_max"], message: "Max must be ≥ min" });
 export type SchoolPayload = z.output<typeof schoolPayloadSchema>;
 

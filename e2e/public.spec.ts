@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "@playwright/test";
+import { E2E_NAME, E2E_SCHOOL } from "./fixtures/schools";
 
 const MAIL = process.env.E2E_MAIL_URL ?? "http://127.0.0.1:56324";
 
@@ -54,16 +55,16 @@ test.describe("public site", () => {
   });
 
   test("directory filters and sorts", async ({ page }) => {
-    await page.goto("/en/schools?city=bishkek&system=ib");
-    await expect(page.getByRole("heading", { name: "Ala-Too International School" })).toBeVisible();
+    await page.goto("/en/schools?city=bishkek&system=ib&q=E2E");
+    await expect(page.getByRole("heading", { name: E2E_NAME.alaToo })).toBeVisible();
     await expect(page.getByText("1 school found")).toBeVisible();
     await page.goto("/en/schools?tmax=0");
     for (const card of await page.locator("article").all()) await expect(card).toContainText(/Free|0 – /);
   });
 
   test("school page exposes structured data and all sections", async ({ page }) => {
-    await page.goto("/en/schools/ala-too-international-school");
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Ala-Too International School");
+    await page.goto(`/en/schools/${E2E_SCHOOL.alaToo}`);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(E2E_NAME.alaToo);
     for (const id of ["overview", "languages", "tuition", "transportation", "reviews"]) await expect(page.locator(`#${id}`)).toBeVisible();
     const ld = await page.locator('script[type="application/ld+json"]').allTextContents();
     expect(ld.join("")).toContain('"@type":"School"');
@@ -81,7 +82,7 @@ test.describe("public site", () => {
   });
 
   test("sample schools are noindex while real profiles stay indexable", async ({ page }) => {
-    await page.goto("/en/schools/ala-too-international-school");
+    await page.goto(`/en/schools/${E2E_SCHOOL.alaToo}`);
     await expect(page.locator("meta[name=robots]")).toHaveAttribute("content", /noindex/);
     await page.goto("/en/schools/asylkech-girls-school");
     await expect(page.locator("meta[name=robots]")).toHaveAttribute("content", /^index/);
@@ -105,7 +106,7 @@ test.describe("public site", () => {
   });
 
   test("a shared comparison link replaces an earlier saved selection", async ({ page }) => {
-    await page.goto("/en/compare?s=ala-too-international-school,tengri-stem-gymnasium");
+    await page.goto(`/en/compare?s=${E2E_SCHOOL.alaToo},${E2E_SCHOOL.tengri}`);
     await expect(page.locator("thead th[scope=col]")).toHaveCount(2);
     await page.goto("/en/compare?s=asylkech-girls-school,indigo-sapat");
     await expect(page.locator("thead th[scope=col]")).toHaveCount(2);
@@ -172,13 +173,13 @@ test.describe("public site", () => {
   });
 
   test("school pages link to Google Maps and 2GIS", async ({ page }) => {
-    await page.goto("/en/schools/ala-too-international-school");
+    await page.goto(`/en/schools/${E2E_SCHOOL.alaToo}`);
     await expect(page.getByRole("link", { name: "Open in Google Maps" })).toHaveAttribute("href", /google\.com\/maps\/search/);
     await expect(page.getByRole("link", { name: "Open in 2GIS" })).toHaveAttribute("href", /2gis\.kg\/\?m=/);
   });
 
   test("the school's Google map opens by itself, with no button to press", async ({ page }) => {
-    await page.goto("/en/schools/ala-too-international-school");
+    await page.goto(`/en/schools/${E2E_SCHOOL.alaToo}`);
     await expect(page.getByRole("button", { name: "Show map" })).toHaveCount(0);
     await page.locator("#location").scrollIntoViewIfNeeded();
     const frame = page.locator("iframe[src*='google.com/maps']");
@@ -188,7 +189,7 @@ test.describe("public site", () => {
   });
 
   test("'Get directions' lets the visitor choose Google Maps or 2GIS", async ({ page }) => {
-    await page.goto("/en/schools/ala-too-international-school");
+    await page.goto(`/en/schools/${E2E_SCHOOL.alaToo}`);
     await page.getByRole("button", { name: "Get directions" }).click();
     await expect(page.getByText("Get directions with")).toBeVisible();
     const google = page.getByRole("menuitem", { name: "Google Maps" });
@@ -215,7 +216,7 @@ test.describe("public site", () => {
           return { AdvancedMarkerElement: class { constructor(o) { window.__calls.push({ marker: { title: o.title, position: o.position, svg: o.content.innerHTML.includes("<svg"), school: o.content.dataset.schoolMarker } }); o.map && document.querySelector("[data-stub-map]").appendChild(o.content); } } };
         } } };`,
     }));
-    await page.goto("/en/schools/ala-too-international-school");
+    await page.goto(`/en/schools/${E2E_SCHOOL.alaToo}`);
     await page.locator("#location").scrollIntoViewIfNeeded();
     await expect(page.locator("[data-stub-map] [data-school-marker] svg")).toBeVisible();
     const calls = await page.evaluate(() => (window as unknown as { __calls: Record<string, unknown>[] }).__calls);
@@ -223,7 +224,7 @@ test.describe("public site", () => {
     expect(map.zoom).toBe(17);
     expect(map.center.lat).toBeGreaterThan(42);
     const marker = calls.find((c) => c.marker)!.marker as { title: string; school: string };
-    expect(marker.title).toBe("Ala-Too International School");
+    expect(marker.title).toBe(E2E_NAME.alaToo);
     expect(marker.school).toBe("true");
     await expect(page.locator("iframe[src*='google.com/maps']")).toHaveCount(0);
   });
@@ -235,7 +236,7 @@ test.describe("public site", () => {
   });
 
   test("yearly fees show the school's own price, the monthly equivalent and what is covered", async ({ page }) => {
-    await page.goto("/en/schools/ala-too-international-school#tuition");
+    await page.goto(`/en/schools/${E2E_SCHOOL.alaToo}#tuition`);
     const tuition = page.locator("#tuition");
     await expect(tuition).toContainText("380,000 – 520,000 KGS / year");
     await expect(tuition).toContainText("≈ 38,000 – 52,000 KGS / month");
@@ -244,7 +245,7 @@ test.describe("public site", () => {
     await expect(tuition.getByText("Paid separately")).toBeVisible();
     await expect(tuition).toContainText("6,500 KGS one-time");
     // a school that bills monthly shows no conversion, and lists what it has not stated
-    await page.goto("/en/schools/silk-road-lyceum#tuition");
+    await page.goto(`/en/schools/${E2E_SCHOOL.silkRoad}#tuition`);
     await expect(page.locator("#tuition")).toContainText("KGS / month");
     await expect(page.locator("#tuition")).not.toContainText("Monthly equivalent");
     await expect(page.locator("#tuition")).toContainText("Estimated per school year");
@@ -252,10 +253,10 @@ test.describe("public site", () => {
   });
 
   test("the directory card and the comparison use the same fee figures", async ({ page }) => {
-    await page.goto("/en/schools?q=Ala-Too");
+    await page.goto("/en/schools?q=E2E+Ala-Too");
     await expect(page.locator("article").first()).toContainText("/ year");
     await expect(page.locator("article").first()).toContainText("≈ 38,000 – 52,000 KGS / month");
-    await page.goto("/en/compare?s=ala-too-international-school,tengri-stem-gymnasium,talas-valley-gymnasium");
+    await page.goto(`/en/compare?s=${E2E_SCHOOL.alaToo},${E2E_SCHOOL.tengri},${E2E_SCHOOL.talasValley}`);
     const table = page.locator("table");
     await expect(table.getByRole("row", { name: /Fee set by the school/ })).toContainText("/ year");
     await expect(table.getByRole("row", { name: /Fee set by the school/ })).toContainText("/ quarter");
@@ -265,18 +266,18 @@ test.describe("public site", () => {
   });
 
   test("the school day appears on cards, school pages and in comparisons", async ({ page }) => {
-    await page.goto("/en/schools?q=Bilim");
+    await page.goto("/en/schools?q=E2E+Bilim");
     await expect(page.locator("article").first()).toContainText("08:00–13:30 · Mon–Sat");
-    await page.goto("/en/schools/ala-too-international-school");
+    await page.goto(`/en/schools/${E2E_SCHOOL.alaToo}`);
     await expect(page.locator("#overview")).toContainText("School day");
     await expect(page.locator("#overview")).toContainText("08:15–15:45 · Mon–Fri");
-    await page.goto("/en/compare?s=ala-too-international-school,bilim-secondary-school");
+    await page.goto(`/en/compare?s=${E2E_SCHOOL.alaToo},${E2E_SCHOOL.bilim}`);
     await expect(page.getByRole("row", { name: /^School day/ })).toContainText("08:00–13:30 · Mon–Sat");
   });
 
   test("a school's WhatsApp button opens a chat with a polite message in the visitor's language", async ({ page, context }) => {
     await context.route("https://wa.me/**", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "ok" }));
-    const slug = "capital-turkish-kyrgyz-lyceum";
+    const slug = E2E_SCHOOL.capital;
     await page.goto(`/en/schools/${slug}`);
     const button = page.getByRole("link", { name: "WhatsApp", exact: true });
     const href = (await button.getAttribute("href"))!;
@@ -301,14 +302,14 @@ test.describe("public site", () => {
   });
 
   test("a school without a WhatsApp number shows no WhatsApp button", async ({ page }) => {
-    await page.goto("/en/schools/tengri-stem-gymnasium");
+    await page.goto(`/en/schools/${E2E_SCHOOL.tengri}`);
     await expect(page.getByRole("link", { name: "WhatsApp", exact: true })).toHaveCount(0);
   });
 
   test("school pages report which sections were reached and how long they stayed open", async ({ page }) => {
     const events: string[] = [];
     page.on("request", (r) => { if (r.url().endsWith("/api/track") && r.method() === "POST") events.push(r.postData() ?? ""); });
-    await page.goto("/en/schools/chu-valley-lyceum");
+    await page.goto(`/en/schools/${E2E_SCHOOL.chuValley}`);
     await page.locator("#reviews").scrollIntoViewIfNeeded();
     await expect.poll(() => events.some((e) => e.includes('"type":"section_view"') && e.includes('"meta":"reviews"'))).toBeTruthy();
     await page.waitForTimeout(1300);
@@ -351,14 +352,14 @@ test.describe("public site", () => {
     expect(sitemap.ok()).toBeTruthy();
     const xml = await sitemap.text();
     expect(xml).toContain("/kg/schools/asylkech-girls-school");
-    expect(xml).not.toContain("/schools/ala-too-international-school");
+    expect(xml).not.toContain(`/schools/${E2E_SCHOOL.alaToo}`);
     expect((await request.get("/robots.txt")).ok()).toBeTruthy();
     const og = await request.get("/api/og?title=Test");
     expect(og.headers()["content-type"]).toContain("image/png");
   });
 
   test("pages hydrate cleanly in every language (numbers and dates read the same on the server and in the browser)", async ({ browser }) => {
-    const paths = ["", "/schools", "/schools/silk-road-lyceum", "/schools/ala-too-international-school", "/map", "/compare?s=silk-road-lyceum,ala-too-international-school", "/education", "/community"];
+    const paths = ["", "/schools", `/schools/${E2E_SCHOOL.silkRoad}`, `/schools/${E2E_SCHOOL.alaToo}`, "/map", `/compare?s=${E2E_SCHOOL.silkRoad},${E2E_SCHOOL.alaToo}`, "/education", "/community"];
     for (const lang of ["kg", "ru", "en"]) {
       for (const path of paths) {
         const page = await (await browser.newContext()).newPage();
@@ -385,18 +386,19 @@ test.describe("public site", () => {
   });
 
   test("Bishkek schools can be filtered by district, and the district follows the city", async ({ page }) => {
-    await page.goto("/en/schools?city=bishkek&district=oktyabrsky");
-    await expect(page.getByText("4 schools found")).toBeVisible();
-    await expect(page.locator("article").filter({ hasText: "Asylkech Girls School" })).toHaveCount(1);
-    await expect(page.locator("article").filter({ hasText: "Ala-Too" })).toHaveCount(0);
+    // the sample Silk Road lyceum is in Oktyabrsky, the sample Ala-Too school in Pervomaisky
+    await page.goto("/en/schools?city=bishkek&district=oktyabrsky&q=E2E");
+    await expect(page.getByText(/^\d+ schools? found$/)).toBeVisible();
+    await expect(page.locator("article").filter({ hasText: E2E_NAME.silkRoad })).toHaveCount(1);
+    await expect(page.locator("article").filter({ hasText: E2E_NAME.alaToo })).toHaveCount(0);
     await expect(page.getByLabel("District").first()).toHaveValue("oktyabrsky");
     // another city: the leftover district is ignored, the filter disappears
     await page.goto("/en/schools?city=osh&district=oktyabrsky");
     await expect(page.getByLabel("District")).toHaveCount(0);
     await expect(page.locator("article").first()).toBeVisible();
-    await expect(page.locator("article").filter({ hasText: "Asylkech Girls School" })).toHaveCount(0);
-    // the school page names the district (a demo school: real schools are edited by the team and change)
-    await page.goto("/en/schools/silk-road-lyceum");
+    await expect(page.locator("article").filter({ hasText: E2E_NAME.silkRoad })).toHaveCount(0);
+    // the school page names the district
+    await page.goto(`/en/schools/${E2E_SCHOOL.silkRoad}`);
     await expect(page.getByText("District: Oktyabrsky")).toBeVisible();
   });
 

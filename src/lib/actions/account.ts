@@ -49,6 +49,21 @@ async function verifyCurrentPassword(member: NonNullable<Awaited<ReturnType<type
   return !error;
 }
 
+/** Only signed Auth claims can establish a recent social sign-in; profile metadata is user-editable. */
+async function hasRecentSocialSignIn(member: NonNullable<Awaited<ReturnType<typeof getMember>>>) {
+  if (!member.user.identities?.some((identity) => identity.provider === "google" || identity.provider === "apple")) return false;
+  const { data, error } = await member.supabase.auth.getClaims();
+  if (error || data?.claims.sub !== member.user.id) return false;
+  const now = Math.floor(Date.now() / 1000);
+  return (data.claims.amr ?? []).some((entry) => (
+    typeof entry === "object"
+    && entry.method === "oauth"
+    && typeof entry.timestamp === "number"
+    && entry.timestamp <= now
+    && entry.timestamp >= now - 10 * 60
+  ));
+}
+
 export async function changePasswordAction(input: unknown): Promise<ActionResult> {
   const parsed = changePasswordSchema.safeParse(input);
   if (!parsed.success) return fromZod(parsed.error);
@@ -87,10 +102,19 @@ export async function deleteAccountAction(input: unknown): Promise<ActionResult>
   const member = await getMember();
   if (!member) return fail("unauthenticated");
   if (!rateLimit(`account-delete:${member.user.id}`, 5, 60 * 60_000).ok) return fail("rate_limited");
-  if (!(await verifyCurrentPassword(member, parsed.data.password))) return fail("validation", { password: "wrong_password" });
+  // Determine this afresh from Auth's password state; a client may never choose the passwordless path.
+  const passwordState = await member.supabase.rpc("user_has_password");
+  if (passwordState.error || typeof passwordState.data !== "boolean") return fail("unknown");
+  if (passwordState.data) {
+    if (!parsed.data.password) return fail("validation", { password: "required" });
+    if (!(await verifyCurrentPassword(member, parsed.data.password))) return fail("validation", { password: "wrong_password" });
+  } else if (!(await hasRecentSocialSignIn(member))) {
+    return fail("validation", { understood: "reauthentication_required" });
+  }
 
   const { error } = await member.supabase.rpc("delete_my_account");
-  if (error) return fail(/staff_cannot_self_delete/.test(error.message) ? "validation" : "unknown", /staff_cannot_self_delete/.test(error.message) ? { password: "staff_cannot_self_delete" } : undefined);
+  if (error?.message.includes("oauth_reauthentication_required")) return fail("validation", { understood: "reauthentication_required" });
+  if (error) return fail(/staff_cannot_self_delete/.test(error.message) ? "validation" : "unknown", /staff_cannot_self_delete/.test(error.message) ? { understood: "staff_cannot_self_delete" } : undefined);
   await member.supabase.auth.signOut();
   return { ok: true };
 }

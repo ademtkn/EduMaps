@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { useToast } from "@/components/ui/toast";
 
-export function ProfileForm({ initial, cities }: { initial: { displayName: string; bio: string; cityId: string; preferredLang: Lang }; cities: CityData[] }) {
+export function ProfileForm({ initial, cities }: { initial: { displayName: string; username: string; bio: string; cityId: string; preferredLang: Lang }; cities: CityData[] }) {
   const dict = useDict();
   const lang = useLang();
   const { toast } = useToast();
@@ -26,13 +26,24 @@ export function ProfileForm({ initial, cities }: { initial: { displayName: strin
   async function onSubmit(values: ProfileInput) {
     setFormError(null);
     const result = await updateProfileAction(values);
-    if (!result.ok) return setFormError(errorText(dict, result.error) ?? dict.errors.unknown);
+    if (!result.ok) {
+      if (result.error === "validation" && result.fieldErrors) {
+        for (const [field, message] of Object.entries(result.fieldErrors)) {
+          form.setError(field as keyof ProfileInput, { message });
+        }
+        return;
+      }
+      return setFormError(errorText(dict, result.error) ?? dict.errors.unknown);
+    }
     toast("success", dict.dashboard.profileSaved);
   }
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="max-w-xl space-y-5">
       {formError ? <Alert tone="danger">{formError}</Alert> : null}
+      <Field label={dict.auth.username} htmlFor="p-username" hint={dict.auth.usernameHint} error={errorText(dict, errors.username?.message)}>
+        <Input id="p-username" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={30} aria-invalid={!!errors.username} {...form.register("username")} />
+      </Field>
       <Field label={dict.dashboard.displayName} htmlFor="p-name" error={errorText(dict, errors.displayName?.message)}>
         <Input id="p-name" maxLength={60} {...form.register("displayName")} />
       </Field>

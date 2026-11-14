@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { signInAction, signUpAction } from "@/lib/actions/auth";
+import { signInAction, signUpAction, startOAuthAction, type OAuthProvider } from "@/lib/actions/auth";
 import { safeNextPath } from "@/lib/constants";
 import { MIN_AGE } from "@/lib/company";
 import { errorText } from "@/lib/form-errors";
@@ -22,11 +22,57 @@ import { Field, Honeypot, Input } from "@/components/ui/form";
 import { PasswordInput } from "@/components/ui/password-input";
 import { LLink } from "@/components/ui/localized-link";
 
+function ConsentLabel() {
+  const dict = useDict();
+  return <RichText text={dict.auth.consent} vars={{ age: MIN_AGE }} links={{ terms: { href: "/terms", label: dict.auth.termsLink }, privacy: { href: "/privacy", label: dict.auth.privacyLink } }} />;
+}
+
+function OAuthButtons({ next, consent, onMissingConsent }: { next?: string; consent: boolean; onMissingConsent: () => void }) {
+  const dict = useDict();
+  const lang = useLang();
+  const [pending, setPending] = useState<OAuthProvider | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function start(provider: OAuthProvider) {
+    setError(null);
+    if (!consent) return onMissingConsent();
+    setPending(provider);
+    try {
+      const result = await startOAuthAction({ provider, lang, next, consent: true });
+      if (!result.ok) {
+        setError(errorText(dict, result.fieldErrors?.consent ?? result.error) ?? dict.errors.unknown);
+      } else if (result.data?.unavailable) {
+        setError(dict.auth.oauthUnavailable);
+      } else if (result.data?.url) {
+        window.location.assign(result.data.url);
+      } else {
+        setError(dict.auth.oauthError);
+      }
+    } catch {
+      setError(dict.auth.oauthError);
+    } finally {
+      setPending(null);
+    }
+  }
+
+  return <div className="space-y-3">
+    {error ? <Alert tone="danger">{error}</Alert> : null}
+    <Button variant="outline" size="lg" className="w-full" disabled={pending !== null} onClick={() => start("google")}>
+      {pending === "google" ? dict.common.loading : dict.auth.continueGoogle}
+    </Button>
+    <Button variant="outline" size="lg" className="w-full" disabled={pending !== null} onClick={() => start("apple")}>
+      {pending === "apple" ? dict.common.loading : dict.auth.continueApple}
+    </Button>
+  </div>;
+}
+
 export function LoginForm({ next }: { next?: string }) {
   const dict = useDict();
   const lang = useLang();
   const [formError, setFormError] = useState<string | null>(null);
-  const form = useForm<LoginInput>({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } });
+  const [socialConsent, setSocialConsent] = useState(false);
+  const [consentError, setConsentError] = useState(false);
+  const form = useForm<LoginInput>({ resolver: zodResolver(loginSchema), defaultValues: { identifier: "", password: "" } });
   const { errors, isSubmitting } = form.formState;
 
   async function onSubmit(values: LoginInput) {
@@ -38,10 +84,11 @@ export function LoginForm({ next }: { next?: string }) {
   }
 
   return (
+    <div className="space-y-5">
     <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="space-y-5">
       {formError ? <Alert tone="danger">{formError}</Alert> : null}
-      <Field label={dict.auth.email} htmlFor="email" error={errorText(dict, errors.email?.message)}>
-        <Input id="email" type="email" autoComplete="email" inputMode="email" aria-invalid={!!errors.email} {...form.register("email")} />
+      <Field label={dict.auth.identifier} htmlFor="identifier" error={errorText(dict, errors.identifier?.message)}>
+        <Input id="identifier" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={254} aria-invalid={!!errors.identifier} {...form.register("identifier")} />
       </Field>
       <Field label={dict.auth.password} htmlFor="password" error={errorText(dict, errors.password?.message)}>
         <PasswordInput id="password" autoComplete="current-password" aria-invalid={!!errors.password} {...form.register("password")} />
@@ -50,13 +97,17 @@ export function LoginForm({ next }: { next?: string }) {
       <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? dict.common.loading : dict.auth.signIn}
       </Button>
+    </form>
+      <div className="flex items-center gap-3 text-caption text-ink-500"><span className="h-px flex-1 bg-ink-200" />{dict.auth.or}<span className="h-px flex-1 bg-ink-200" /></div>
+      <ConsentCheckbox id="login-social-consent" label={<ConsentLabel />} checked={socialConsent} onChange={(event) => { setSocialConsent(event.target.checked); setConsentError(false); }} error={consentError ? dict.errors.consent_required : undefined} />
+      <OAuthButtons next={next} consent={socialConsent} onMissingConsent={() => setConsentError(true)} />
       <p className="text-center text-small text-ink-600">
         {dict.auth.noAccount}{" "}
         <LLink href={`/auth/register${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="font-semibold text-brand-700 hover:underline">
           {dict.auth.signUp}
         </LLink>
       </p>
-    </form>
+    </div>
   );
 }
 
@@ -65,9 +116,10 @@ export function RegisterForm({ next }: { next?: string }) {
   const lang = useLang();
   const [formError, setFormError] = useState<string | null>(null);
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { displayName: "", email: "", password: "", lang, website: "" },
+    defaultValues: { username: "", email: "", password: "", lang, website: "" },
   });
   const { errors, isSubmitting } = form.formState;
 
@@ -96,8 +148,13 @@ export function RegisterForm({ next }: { next?: string }) {
     <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="relative space-y-5">
       {formError ? <Alert tone="danger">{formError}</Alert> : null}
       <Honeypot {...form.register("website")} />
-      <Field label={dict.auth.displayName} htmlFor="displayName" hint={dict.auth.displayNameHint} error={errorText(dict, errors.displayName?.message)}>
-        <Input id="displayName" autoComplete="nickname" maxLength={60} aria-invalid={!!errors.displayName} {...form.register("displayName")} />
+      <ConsentCheckbox id="reg-consent" label={<ConsentLabel />} error={errorText(dict, errors.consent?.message)} {...form.register("consent")} onChange={(event) => { void form.register("consent").onChange(event); form.clearErrors("consent"); }} />
+      <OAuthButtons next={next} consent={form.watch("consent") === true} onMissingConsent={() => form.setError("consent", { message: "consent_required" }, { shouldFocus: true })} />
+      <div className="flex items-center gap-3 text-caption text-ink-500"><span className="h-px flex-1 bg-ink-200" />{dict.auth.or}<span className="h-px flex-1 bg-ink-200" /></div>
+      <Button variant="outline" size="lg" className="w-full" aria-expanded={emailOpen} aria-controls="email-registration" onClick={() => setEmailOpen(!emailOpen)}>{dict.auth.continueEmail}</Button>
+      {emailOpen ? <div id="email-registration" className="space-y-5">
+      <Field label={dict.auth.username} htmlFor="username" hint={dict.auth.usernameHint} error={errorText(dict, errors.username?.message)}>
+        <Input id="username" autoComplete="username" autoCapitalize="none" spellCheck={false} minLength={3} maxLength={30} aria-invalid={!!errors.username} {...form.register("username")} />
       </Field>
       <Field label={dict.auth.email} htmlFor="reg-email" error={errorText(dict, errors.email?.message)}>
         <Input id="reg-email" type="email" autoComplete="email" inputMode="email" aria-invalid={!!errors.email} {...form.register("email")} />
@@ -105,24 +162,13 @@ export function RegisterForm({ next }: { next?: string }) {
       <Field label={dict.auth.password} htmlFor="reg-password" hint={dict.auth.passwordHint} error={errorText(dict, errors.password?.message)}>
         <PasswordInput id="reg-password" autoComplete="new-password" aria-invalid={!!errors.password} {...form.register("password")} />
       </Field>
-      <ConsentCheckbox
-        id="reg-consent"
-        label={
-          <RichText
-            text={dict.auth.consent}
-            vars={{ age: MIN_AGE }}
-            links={{ terms: { href: "/terms", label: dict.auth.termsLink }, privacy: { href: "/privacy", label: dict.auth.privacyLink } }}
-          />
-        }
-        error={errorText(dict, errors.consent?.message)}
-        {...form.register("consent")}
-      />
       <p className="text-caption text-ink-500">
         <RichText text={dict.auth.guidelinesHint} vars={{}} links={{ guidelines: { href: "/guidelines", label: dict.auth.guidelinesLink } }} />
       </p>
       <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? dict.common.loading : dict.auth.signUp}
       </Button>
+      </div> : null}
       <p className="text-center text-small text-ink-600">
         {dict.auth.haveAccount}{" "}
         <LLink href={`/auth/login${next ? `?next=${encodeURIComponent(next)}` : ""}`} className="font-semibold text-brand-700 hover:underline">

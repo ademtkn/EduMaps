@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteSchoolAction, saveSchoolAction } from "@/lib/actions/admin";
-import { MAX_DOCUMENTS, PLAN_LIMITS, SCHOOL_TYPES, type Plan } from "@/lib/constants";
+import { INSTITUTION_KINDS, MAX_DOCUMENTS, PLAN_LIMITS, SCHOOL_TYPES, type InstitutionKind, type Plan } from "@/lib/constants";
 
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/form";
@@ -22,6 +22,7 @@ export type SchoolFormValues = {
   about: I18nValue;
   city_id: string;
   school_type: (typeof SCHOOL_TYPES)[number];
+  institution_kind: InstitutionKind;
   education_systems: string[];
   grade_from: number | string;
   grade_to: number | string;
@@ -131,6 +132,11 @@ export function SchoolForm({ initial, cities, options }: { initial: SchoolFormVa
           <Field label="School type" htmlFor="f-type">
             <Select id="f-type" value={v.school_type} onChange={(e) => set("school_type", e.target.value as SchoolFormValues["school_type"])}>
               {SCHOOL_TYPES.map((t) => <option key={t} value={t}>{t[0]!.toUpperCase() + t.slice(1)}</option>)}
+            </Select>
+          </Field>
+          <Field label="Institution" htmlFor="f-kind" hint="School, kindergarten, college or madrasa. Visitors filter by it.">
+            <Select id="f-kind" value={v.institution_kind} onChange={(e) => set("institution_kind", e.target.value as InstitutionKind)}>
+              {INSTITUTION_KINDS.map((k) => <option key={k} value={k}>{k[0]!.toUpperCase() + k.slice(1)}</option>)}
             </Select>
           </Field>
           <Field label="Status" htmlFor="f-status" hint="Only published schools are visible to the public.">

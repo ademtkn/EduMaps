@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { E2E_SCHOOL } from "./fixtures/schools";
 
 test.describe("mobile layout", () => {
-  for (const path of ["/kg", "/en/schools", "/en/schools/ala-too-international-school", "/en/map", "/en/education", "/en/community", "/en/about", "/en/auth/login"]) {
+  for (const path of ["/kg", "/en/schools", `/en/schools/${E2E_SCHOOL.alaToo}`, "/en/map", "/en/education", "/en/community", "/en/about", "/en/auth/login"]) {
     test(`no horizontal scroll on ${path}`, async ({ page }) => {
       await page.goto(path);
       const { scroll, client } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));

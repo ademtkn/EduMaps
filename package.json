@@ -18,7 +18,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "setup": "bash scripts/setup.sh",
     "typecheck": "tsc --noEmit",
-    "test": "npm run lint && npm run typecheck && npm run test:i18n && npm run test:import && npm run test:media && npm run test:maplinks && npm run test:db",
+    "test": "npm run lint && npm run typecheck && npm run test:i18n && npm run test:auth && npm run test:import && npm run test:media && npm run test:maplinks && npm run test:db",
     "test:i18n": "tsx scripts/check-i18n.ts",
     "test:db": "tsx scripts/verify-security.ts",
     "e2e": "playwright test",
@@ -26,7 +26,10 @@
     "test:import": "tsx scripts/test-import.ts",
     "media:optimize": "tsx scripts/optimize-media.ts",
     "test:media": "tsx scripts/test-media.ts",
-    "test:maplinks": "tsx scripts/test-maplinks.ts"
+    "test:maplinks": "tsx scripts/test-maplinks.ts",
+    "test:auth": "node --conditions=react-server --import tsx scripts/test-auth.ts",
+    "research:import": "tsx scripts/import-researched-schools.ts",
+    "registry:import": "tsx scripts/import-registry-schools.ts"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",

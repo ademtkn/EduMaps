@@ -13,6 +13,7 @@ export type SchoolCardData = {
   rating_avg: number;
   rating_count: number;
   school_type: "public" | "private" | "international" | "specialized";
+  institution_kind: "school" | "kindergarten" | "college" | "madrasa";
   education_systems: string[];
   has_transportation: boolean;
   has_boarding: boolean;
@@ -26,8 +27,8 @@ export type SchoolCardData = {
   opening_time: string | null;
   closing_time: string | null;
   working_days: number[];
-  grade_from: number;
-  grade_to: number;
+  grade_from: number | null;
+  grade_to: number | null;
   updated_at: string;
   data_status: "demo" | "unverified" | "verified";
   cities: CityRef;
@@ -95,9 +96,10 @@ export type MapSchool = {
   tuition_min: number | null;
   tuition_max: number | null;
   school_type: string;
+  institution_kind: string;
   education_systems: string[];
-  grade_from: number;
-  grade_to: number;
+  grade_from: number | null;
+  grade_to: number | null;
   has_transportation: boolean;
   has_boarding: boolean;
   has_sports: boolean;

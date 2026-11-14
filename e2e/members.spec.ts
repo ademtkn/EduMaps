@@ -1,11 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
+import en from "../src/lib/i18n/dictionaries/en.json";
+import { E2E_NAME, E2E_SCHOOL } from "./fixtures/schools";
 
 const USER = { email: "nurlan@example.com", password: process.env.SEED_USER_PASSWORD ?? "EduMap-Parent-2026!" };
 const ADMIN = { email: process.env.SEED_ADMIN_EMAIL ?? "admin@edumap.kg", password: process.env.SEED_ADMIN_PASSWORD ?? "EduMap-Admin-2026!" };
 
 async function login(page: Page, who: { email: string; password: string }, next = "/en/dashboard") {
   await page.goto(`/en/auth/login?next=${encodeURIComponent(next)}`);
-  await page.getByLabel("Email").fill(who.email);
+  await page.getByLabel("Username or email").fill(who.email);
   await page.getByLabel("Password", { exact: true }).fill(who.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL((u) => !u.pathname.includes("/auth/login"));
@@ -21,15 +23,16 @@ test.describe.serial("member journey", () => {
 
   test("wrong password shows an error", async ({ page }) => {
     await page.goto("/en/auth/login");
-    await page.getByLabel("Email").fill(USER.email);
+    await page.getByLabel("Username or email").fill(USER.email);
     await page.getByLabel("Password", { exact: true }).fill("not-the-password");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page.getByText("Incorrect email or password.")).toBeVisible();
+    await expect(page.getByText(en.auth.invalidCredentials)).toBeVisible();
   });
 
   test("registration requires accepting the terms and privacy policy", async ({ page }) => {
     await page.goto("/en/auth/register");
-    await page.getByLabel("Display name").fill("No Consent");
+    await page.getByRole("button", { name: "Continue with email" }).click();
+    await page.getByLabel("Username", { exact: true }).fill(`e2e_noconsent_${Date.now()}`);
     await page.getByLabel("Email").fill(`e2e-noconsent-${Date.now()}@example.com`);
     await page.getByLabel("Password", { exact: true }).fill("Passw0rd-e2e!");
     await page.getByRole("button", { name: "Create account", exact: true }).click();
@@ -41,32 +44,34 @@ test.describe.serial("member journey", () => {
   test("register, save a school and see it in the dashboard", async ({ page }) => {
     const email = `e2e-${Date.now()}@example.com`;
     await page.goto("/en/auth/register");
-    await page.getByLabel("Display name").fill("E2E Parent");
+    await page.getByRole("button", { name: "Continue with email" }).click();
+    await page.getByLabel("Username", { exact: true }).fill(`e2e_parent_${Date.now()}`);
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill("Passw0rd-e2e!");
     await page.getByRole("checkbox", { name: /at least 16/ }).check();
     await page.getByRole("button", { name: "Create account", exact: true }).click();
     await page.waitForURL(/\/en\/dashboard/);
-    await page.goto("/en/schools/silk-road-lyceum");
+    await page.goto(`/en/schools/${E2E_SCHOOL.silkRoad}`);
     // the member is loaded in the browser after the page; saving before that would count as signed out
-    await expect(page.getByRole("button", { name: /Account|E2E Parent|^EP$/ }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Account/ }).first()).toBeVisible();
     await page.getByRole("button", { name: "Save", exact: true }).first().click();
     await expect(page.getByRole("button", { name: "Saved" }).first()).toBeVisible();
     await page.goto("/en/dashboard?tab=schools");
-    await expect(page.getByRole("heading", { name: "Silk Road Lyceum" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: E2E_NAME.silkRoad })).toBeVisible();
   });
 
   test("review goes through moderation to publication", async ({ page, browser }) => {
     const title = `E2E review ${Date.now()}`;
     const email = `e2e-review-${Date.now()}@example.com`;
     await page.goto("/en/auth/register");
-    await page.getByLabel("Display name").fill("E2E Reviewer");
+    await page.getByRole("button", { name: "Continue with email" }).click();
+    await page.getByLabel("Username", { exact: true }).fill(`e2e_reviewer_${Date.now()}`);
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill("Passw0rd-e2e!");
     await page.getByRole("checkbox", { name: /at least 16/ }).check();
     await page.getByRole("button", { name: "Create account", exact: true }).click();
     await page.waitForURL(/\/en\/dashboard/);
-    await page.goto("/en/schools/neva-russian-school#reviews");
+    await page.goto(`/en/schools/${E2E_SCHOOL.neva}#reviews`);
     await page.getByRole("radio", { name: "5 / 5" }).first().click();
     await page.getByLabel("Headline").fill(title);
     await page.getByLabel("Your review").fill(`Automated test review ${title}: the teachers were attentive and communication with parents was prompt and clear.`);
@@ -74,7 +79,7 @@ test.describe.serial("member journey", () => {
     await expect(page.getByText("Pending moderation")).toBeVisible();
 
     const anon = await browser.newPage();
-    await anon.goto("/en/schools/neva-russian-school");
+    await anon.goto(`/en/schools/${E2E_SCHOOL.neva}`);
     await expect(anon.getByText(title)).toHaveCount(0);
 
     const adminPage = await browser.newPage();
@@ -84,7 +89,7 @@ test.describe.serial("member journey", () => {
     await card.getByRole("button", { name: "Approve" }).click();
     await expect(adminPage.locator("section", { hasText: title })).toHaveCount(0);
 
-    await anon.goto("/en/schools/neva-russian-school");
+    await anon.goto(`/en/schools/${E2E_SCHOOL.neva}`);
     await expect(anon.getByText(title).first()).toBeVisible({ timeout: 30_000 });
   });
 
@@ -150,7 +155,7 @@ test.describe.serial("admin", () => {
 
   test("admin sets a yearly fee and what it covers, and visitors see it", async ({ page }) => {
     await login(page, ADMIN, "/admin");
-    await page.goto("/admin/schools?q=silk+road");
+    await page.goto("/admin/schools?q=e2e+silk+road");
     await page.getByRole("link", { name: "Edit" }).first().click();
     await page.waitForURL(/\/admin\/schools\/[0-9a-f-]{36}/);
     const editor = page.url();
@@ -165,7 +170,7 @@ test.describe.serial("admin", () => {
     await page.getByRole("button", { name: "Save school" }).click();
     await expect(page.getByText("School saved")).toBeVisible();
 
-    await page.goto("/en/schools/silk-road-lyceum#tuition");
+    await page.goto(`/en/schools/${E2E_SCHOOL.silkRoad}#tuition`);
     await expect(page.locator("#tuition")).toContainText("150,000 – 200,000 KGS / year");
     await expect(page.locator("#tuition")).toContainText("≈ 15,000 – 20,000 KGS / month");
     await expect(page.locator("#tuition")).toContainText("9,000 KGS / year");
@@ -183,7 +188,7 @@ test.describe.serial("admin", () => {
 
   test("an incomplete extra cost is rejected", async ({ page }) => {
     await login(page, ADMIN, "/admin");
-    await page.goto("/admin/schools?q=silk+road");
+    await page.goto("/admin/schools?q=e2e+silk+road");
     await page.getByRole("link", { name: "Edit" }).first().click();
     await page.waitForURL(/\/admin\/schools\/[0-9a-f-]{36}/);
     await page.getByLabel("School year length").waitFor();
@@ -195,7 +200,7 @@ test.describe.serial("admin", () => {
 
   test("admin saves a WhatsApp number in any common format and visitors get the right link", async ({ page }) => {
     await login(page, ADMIN, "/admin");
-    await page.goto("/admin/schools?q=silk+road");
+    await page.goto("/admin/schools?q=e2e+silk+road");
     await page.getByRole("link", { name: "Edit" }).first().click();
     await page.waitForURL(/\/admin\/schools\/[0-9a-f-]{36}/);
     await page.getByLabel("WhatsApp number").fill("not a number");
@@ -204,7 +209,7 @@ test.describe.serial("admin", () => {
     await page.getByLabel("WhatsApp number").fill("0555 123 456");
     await page.getByRole("button", { name: "Save school" }).click();
     await expect(page.getByText("School saved")).toBeVisible();
-    await page.goto("/en/schools/silk-road-lyceum");
+    await page.goto(`/en/schools/${E2E_SCHOOL.silkRoad}`);
     await expect(page.getByRole("link", { name: "WhatsApp", exact: true })).toHaveAttribute("href", /wa\.me\/996555123456\?text=/);
     // remove it again
     await page.goBack();

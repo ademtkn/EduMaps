@@ -1,19 +1,20 @@
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
+import { E2E_SCHOOL } from "./fixtures/schools";
 
 const ADMIN = { email: process.env.SEED_ADMIN_EMAIL ?? "admin@edumap.kg", password: process.env.SEED_ADMIN_PASSWORD ?? "EduMap-Admin-2026!" };
 const STORAGE = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:56321"}/storage/v1/object/public/media`;
 
 async function login(page: Page) {
   await page.goto(`/en/auth/login?next=${encodeURIComponent("/admin")}`);
-  await page.getByLabel("Email").fill(ADMIN.email);
+  await page.getByLabel("Username or email").fill(ADMIN.email);
   await page.getByLabel("Password", { exact: true }).fill(ADMIN.password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await page.waitForURL((u) => !u.pathname.includes("/auth/login"));
 }
 
 async function openSilkRoad(page: Page) {
-  await page.goto("/admin/schools?q=silk+road");
+  await page.goto("/admin/schools?q=e2e+silk+road");
   await page.getByRole("link", { name: "Edit" }).first().click();
   await page.waitForURL(/\/admin\/schools\/[0-9a-f-]{36}/);
 }
@@ -85,7 +86,7 @@ test.describe.serial("media: small files, links instead of uploads", () => {
     await page.getByRole("button", { name: "Save school" }).click();
     await expect(page.getByText("School saved")).toBeVisible();
 
-    await page.goto("/en/schools/silk-road-lyceum");
+    await page.goto(`/en/schools/${E2E_SCHOOL.silkRoad}`);
     const docs = page.locator("#documents");
     await expect(docs.getByRole("heading", { name: "Documents" })).toBeVisible();
     const link = docs.getByRole("link", { name: /Admission rules 2026\/27/ });
@@ -108,7 +109,7 @@ test.describe.serial("media: small files, links instead of uploads", () => {
 
     const requests: string[] = [];
     page.on("request", (r) => requests.push(r.url()));
-    await page.goto("/en/schools/silk-road-lyceum");
+    await page.goto(`/en/schools/${E2E_SCHOOL.silkRoad}`);
     const videos = page.locator("#videos");
     await videos.scrollIntoViewIfNeeded();
     const play = videos.getByRole("button", { name: /Play video/ });
@@ -130,7 +131,7 @@ test.describe.serial("media: small files, links instead of uploads", () => {
     while (await rows('[id^="vid-"]').count()) await rows('[id^="vid-"]').first().getByRole("button", { name: "Remove" }).click();
     await page.getByRole("button", { name: "Save school" }).click();
     await expect(page.getByText("School saved")).toBeVisible();
-    await page.goto("/en/schools/silk-road-lyceum");
+    await page.goto(`/en/schools/${E2E_SCHOOL.silkRoad}`);
     await expect(page.locator("#documents")).toHaveCount(0);
     await expect(page.locator("#videos")).toHaveCount(0);
   });
