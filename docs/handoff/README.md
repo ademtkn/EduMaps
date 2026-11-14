@@ -1,8 +1,33 @@
-# EduMaps handoff — 10 November 2026
+# EduMaps handoff — 15 November 2026
+
+## Standing decision (15 Nov 2026)
+
+EduMapsYapim (`~/Desktop/WEBSITES/EduMapsYapim`, live at edumaps.kg) will **not** be developed
+further. It stays as the data-collection front (school applications, outreach). Everything moves to
+this Next.js app, which is to be finished locally and then published. Do not add features to the
+other repository; when data is needed from it, export it and import it here.
 
 ## Current checkpoint
 
 See [schools-status.md](schools-status.md) for the generated per-institution gaps and [data-audit.md](data-audit.md) for the independent audit. `CLAUDE.md` at repository root points here automatically.
+
+### 15 Nov 2026 — first public-surface cleanup (before any feature work)
+
+The local database was inspected for the first time since the import. Numbers a visitor can see:
+**651 published** schools (238 draft, 37 archived), of which **619 have neither a cover nor a logo**,
+**105 have coordinates** and **one** has a fee. Nothing is `verified`.
+
+- Sample content removed from the public site: all eight sample advertisements deactivated (only the
+  rows changed, no delete), the 15 seeded community posts set to `hidden`, the "EduMaps.kg is live"
+  article set to `draft`. The 80 seeded reviews belong to archived sample schools and are no longer
+  counted.
+- `getSiteStats` now counts only what a visitor can reach: reviews on published schools and cities
+  that hold at least one published school. The reviews tile stays hidden below 10 reviews.
+- Home page: cities with no published school are hidden, the eight busiest are shown, and the hero
+  shortcuts use the same order. The "not confirmed" badge and the repeated "on request" fee line are
+  gone from school cards; grades show only when a range is known. See `school-card.tsx`.
+- Local sample data was **not** deleted, only unpublished: `npm run db:seed` would bring it back.
+  Do not seed without deciding what to do with the eight sample ads and 15 posts.
 
 - All **34 selected institutions** are researched and imported: **33 published**, **Genius.kg Tokmok draft** by explicit owner instruction. An additional historical AIM Balykchy candidate is preserved as a draft, superseded by Birinchi Mugalim in the selected Issyk-Kul batch. Thus import-state has35 historical entries, not35 selected institutions.
 - **87 actual sourced image assets** are stored; **28 selected institutions have a logo and two images**. The six incomplete media sets include the intentionally unverified Genius draft; the five published gaps are Happy Kids, Raduga Tokmok, AALAM Tokmok, Amir Tokmok and Diplomat's missing logo. Missing public contacts/programs/teaching languages remain explicit, not invented. Some genuine school video covers are captioned as such.

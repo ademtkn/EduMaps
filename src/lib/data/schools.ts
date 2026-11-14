@@ -248,18 +248,30 @@ export async function getMapSchools(): Promise<MapSchool[]> {
   });
 }
 
+/**
+ * Numbers shown on the home page. Everything is counted the way a visitor can see it: reviews on
+ * schools that are no longer published are left out (they belong to archived sample profiles), and
+ * only cities that actually have a published school are counted.
+ */
 export async function getSiteStats() {
   const db = createPublicClient();
-  const [schools, reviews, cities, articles] = await Promise.all([
+  const [schools, reviews, articles, located] = await Promise.all([
     db.from("schools").select("id", { count: "exact", head: true }).eq("status", "published"),
-    db.from("reviews").select("id", { count: "exact", head: true }).eq("status", "published"),
-    db.from("cities").select("id", { count: "exact", head: true }),
+    db
+      .from("reviews")
+      .select("id, schools!inner(status)", { count: "exact", head: true })
+      .eq("status", "published")
+      .eq("schools.status", "published"),
     db.from("articles").select("id", { count: "exact", head: true }).eq("status", "published"),
+    // Only cities that hold at least one published school are counted. The list is read in one
+    // request; once more than 1000 schools are published this has to page like the other lists.
+    db.from("schools").select("city_id").eq("status", "published"),
   ]);
+  const cities = new Set(((located.data ?? []) as unknown as { city_id: string | null }[]).map((r) => r.city_id).filter(Boolean)).size;
   return {
     schools: schools.count ?? 0,
     reviews: reviews.count ?? 0,
-    cities: cities.count ?? 0,
+    cities,
     articles: articles.count ?? 0,
   };
 }

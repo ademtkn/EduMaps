@@ -62,6 +62,27 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
     { icon: Languages, title: dict.home.why4Title, text: dict.home.why4Text },
   ];
 
+  // Cities with at least one published school, busiest first. Empty cities are hidden, and the
+  // home page shows only the first eight; every city keeps its own page and footer link.
+  const cityRanking = cities
+    .map((city) => ({ city, count: counts[city.slug] ?? 0 }))
+    .filter((entry) => entry.count > 0)
+    .sort((a, b) => b.count - a.count);
+  const topCities = cityRanking.slice(0, 8);
+  const popularCities = cityRanking.slice(0, 4);
+
+  // One review on 651 schools would weaken the page more than it informs; the tile appears once
+  // there is a number worth showing.
+  const statItems = [
+    { value: stats.schools, label: dict.home.statSchools },
+    ...(stats.reviews >= 10 ? [{ value: stats.reviews, label: dict.home.statReviews }] : []),
+    { value: stats.cities, label: dict.home.statCities },
+    { value: stats.articles, label: dict.home.statArticles },
+  ];
+  const statColumns: Record<number, string> = { 2: "md:grid-cols-2", 3: "md:grid-cols-3", 4: "md:grid-cols-4" };
+  const statGrid = statColumns[statItems.length] ?? "md:grid-cols-4";
+  const statMobileColumns = statItems.length === 3 ? "grid-cols-3" : "grid-cols-2";
+
   return (
     <>
       <section className="relative overflow-hidden bg-brand-900 text-white">
@@ -76,7 +97,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-2 text-small">
             <span className="text-brand-200">{dict.home.popularSearches}</span>
-            {cities.slice(0, 4).map((city) => (
+            {popularCities.map(({ city }) => (
               <Link
                 key={city.slug}
                 href={localizedPath(lang, `/cities/${city.slug}`)}
@@ -89,23 +110,18 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         </div>
       </section>
 
-      <section aria-label="Statistics" className="border-b border-ink-200 bg-white">
-        <dl className="container-page grid grid-cols-2 gap-y-6 py-8 md:grid-cols-4">
-          {[
-            [stats.schools, dict.home.statSchools],
-            [stats.reviews, dict.home.statReviews],
-            [stats.cities, dict.home.statCities],
-            [stats.articles, dict.home.statArticles],
-          ].map(([value, label]) => (
-            <div key={label as string} className="text-center">
-              <dd className="text-h1 font-bold text-brand-800">{formatNumber(value as number, lang)}</dd>
-              <dt className="mt-1 text-small text-ink-600">{label}</dt>
+      <section aria-label={dict.home.statistics} className="border-b border-ink-200 bg-white">
+        <dl className={`container-page grid ${statMobileColumns} gap-y-6 py-8 ${statGrid}`}>
+          {statItems.map((item) => (
+            <div key={item.label} className="flex flex-col-reverse items-center gap-1 text-center">
+              <dt className="text-small text-ink-600">{item.label}</dt>
+              <dd className="text-h1 font-bold text-brand-800">{formatNumber(item.value, lang)}</dd>
             </div>
           ))}
         </dl>
       </section>
 
-      <section className="container-page pt-16">
+      <section className="container-page pt-10 sm:pt-16">
         <SectionHeading title={dict.rankings.title} description={dict.rankings.description} />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
           {([
@@ -125,7 +141,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       </section>
 
       {featured.length > 0 ? (
-      <section className="container-page pt-16">
+      <section className="container-page pt-10 sm:pt-16">
         <SectionHeading
           title={dict.home.discover.title}
           description={dict.home.discover.description}
@@ -140,27 +156,32 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
 
       {voices.length > 0 ? <RotatingVoices voices={voices} /> : null}
 
-      <div className="container-page pt-16">
+      <div className="container-page pt-10 sm:pt-16">
         <AdSlot placement="banner" lang={lang} dict={dict} />
       </div>
 
-      <section className="container-page pt-16">
-        <SectionHeading title={dict.home.citiesTitle} description={dict.home.citiesDescription} />
+      <section className="container-page pt-10 sm:pt-16">
+        <SectionHeading
+          title={dict.home.citiesTitle}
+          description={dict.home.citiesDescription}
+          href="/schools"
+          linkLabel={dict.common.viewAll}
+        />
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {cities.map((city) => (
+          {topCities.map(({ city, count }) => (
             <Link
               key={city.slug}
               href={localizedPath(lang, `/cities/${city.slug}`)}
               className="group rounded-card border border-ink-200 bg-white p-5 shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-lift"
             >
               <p className="text-h3 font-semibold group-hover:text-brand-700">{tr(city.name, lang)}</p>
-              <p className="mt-1 text-small text-ink-600">{fmt(dict.home.schoolsInCity, { count: counts[city.slug] ?? 0 })}</p>
+              <p className="mt-1 text-small text-ink-600">{fmt(dict.home.schoolsInCity, { count })}</p>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="container-page pt-16">
+      <section className="container-page pt-10 sm:pt-16">
         <div className="overflow-hidden rounded-card bg-gradient-to-br from-leaf-700 to-brand-800 p-8 text-white shadow-lift sm:p-12">
           <div className="grid items-center gap-8 md:grid-cols-[1.4fr_1fr]">
             <div>
@@ -177,7 +198,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
         </div>
       </section>
 
-      <section className="container-page pt-16">
+      <section className="container-page pt-10 sm:pt-16">
         <SectionHeading title={dict.home.whyTitle} />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {why.map((item, i) => (
@@ -195,7 +216,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       </section>
 
       {articles.items.length > 0 ? (
-        <section className="container-page pt-16">
+        <section className="container-page pt-10 sm:pt-16">
           <SectionHeading title={dict.home.latestTitle} description={dict.home.latestDescription} href="/education" linkLabel={dict.common.viewAll} />
           <div className="grid gap-6 md:grid-cols-3">
             {articles.items.map((article) => (
@@ -206,7 +227,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       ) : null}
 
       {posts.items.length > 0 ? (
-        <section className="container-page pt-16">
+        <section className="container-page pt-10 sm:pt-16">
           <SectionHeading title={dict.home.communityTitle} description={dict.home.communityDescription} href="/community" linkLabel={dict.home.communityCta} />
           <div className="grid gap-4 md:grid-cols-3">
             {posts.items.map((post) => (

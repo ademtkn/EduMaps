@@ -56,11 +56,9 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
           <Badge tone="outline" className="border-white/0 bg-white/95 shadow-sm">{types[school.school_type]}</Badge>
           {school.institution_kind && school.institution_kind !== "school" ? <Badge tone="outline" className="border-white/0 bg-white/95 shadow-sm">{dict.schools.kinds[school.institution_kind]}</Badge> : null}
         </div>
-        {school.data_status !== "verified" ? (
-          <span className="absolute bottom-3 left-3 rounded-md bg-warning-50/95 px-2 py-0.5 text-caption font-semibold text-warning-700 shadow-sm">
-            {school.data_status === "demo" ? dict.schools.badgeDemo : dict.schools.badgeUnverified}
-          </span>
-        ) : null}
+        {/* The "not confirmed yet" badge stays off the card: almost every listing is still
+            unverified, so repeating it on every card only adds noise. The school page carries one
+            clear notice instead (see dict.school.dataStatus). */}
         <div className="absolute right-3 top-3">
           <FavoriteButton kind="school" id={school.id} />
         </div>
@@ -95,7 +93,10 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
 
         <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-ink-600">
           <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" />{tr(school.cities.name, lang)}</span>
-          <span className="inline-flex items-center gap-1"><GraduationCap className="size-3.5" />{gradeRangeFor(dict, school)}</span>
+          {/* Only a known range is shown; "details pending" on every second card reads as noise. */}
+          {school.grade_from != null && school.grade_to != null ? (
+            <span className="inline-flex items-center gap-1"><GraduationCap className="size-3.5" />{gradeRange(dict, school.grade_from, school.grade_to)}</span>
+          ) : null}
         </p>
 
         {formatSchedule(school, lang) ? (
@@ -105,11 +106,12 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
           </p>
         ) : null}
 
-        <p className="mt-3 text-caption font-medium text-ink-600">
-          {school.rating_count > 0
-            ? `${fmt(dict.grades.outOf, { score: school.rating_avg.toFixed(1) })} · ${fmt(dict.common.reviewsCount, { count: school.rating_count })}`
-            : dict.grades.notGraded}
-        </p>
+        {/* Unrated schools get no extra line: the grade badge already shows a dash. */}
+        {school.rating_count > 0 ? (
+          <p className="mt-3 text-caption font-medium text-ink-600">
+            {`${fmt(dict.grades.outOf, { score: school.rating_avg.toFixed(1) })} · ${fmt(dict.common.reviewsCount, { count: school.rating_count })}`}
+          </p>
+        ) : null}
 
         <div className="mt-3 flex flex-wrap gap-1.5">
           {languages.slice(0, 3).map((l) => (
@@ -127,9 +129,15 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
 
         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
           <div>
-            <p className="text-small font-semibold text-ink-900">{formatFee(school, lang, feeLabels(dict))}</p>
-            {formatMonthlyEquivalent(school, lang, feeLabels(dict)) ? (
-              <p className="text-caption text-ink-500">{formatMonthlyEquivalent(school, lang, feeLabels(dict))}</p>
+            {/* When the school has not stated a fee, the card says nothing: "on request" on almost
+                every card is noise, and the school page already explains that the fee is unknown. */}
+            {school.fee_min != null || school.fee_max != null ? (
+              <>
+                <p className="text-small font-semibold text-ink-900">{formatFee(school, lang, feeLabels(dict))}</p>
+                {formatMonthlyEquivalent(school, lang, feeLabels(dict)) ? (
+                  <p className="text-caption text-ink-500">{formatMonthlyEquivalent(school, lang, feeLabels(dict))}</p>
+                ) : null}
+              </>
             ) : null}
           </div>
           <CompareButton slug={school.slug} schoolId={school.id} />

@@ -27,6 +27,22 @@ function check(name: string, ok: boolean, detail = "") {
   }
 }
 
+/**
+ * One published school to run the member checks against. It used to be the sample profile
+ * "tengri-stem-gymnasium", which is archived now, so the slug is resolved instead of hardcoded.
+ */
+async function publishedSchool() {
+  const { data, error } = await service
+    .from("schools")
+    .select("id,slug")
+    .eq("status", "published")
+    .order("slug")
+    .limit(1)
+    .single();
+  if (error || !data) throw new Error(`no published school to test with: ${error?.message}`);
+  return data;
+}
+
 async function login(email: string, password: string) {
   const client = createClient<Database>(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data, error } = await client.auth.signInWithPassword({ email, password });
@@ -55,7 +71,7 @@ async function main() {
 
   console.log("\nSigned-in member");
   const member = await login("tilek@example.com", userPassword);
-  const { data: school } = await service.from("schools").select("id,slug").eq("slug", "tengri-stem-gymnasium").single();
+  const school = await publishedSchool();
   await service.from("reviews").delete().eq("school_id", school!.id).eq("user_id", member.id);
   await service.from("community_posts").delete().eq("user_id", member.id).like("title", "[verify]%");
 
@@ -255,7 +271,7 @@ async function main() {
   const tempUser = await service.auth.admin.createUser({ email: tempEmail, password: userPassword, email_confirm: true, user_metadata: { display_name: "Verify Delete" } });
   const tempId = tempUser.data.user!.id;
   const temp = await login(tempEmail, userPassword);
-  const tempSchool = (await service.from("schools").select("id").eq("slug", "tengri-stem-gymnasium").single()).data!.id;
+  const tempSchool = (await publishedSchool()).id;
   await temp.client.from("favorites").insert({ user_id: tempId, school_id: tempSchool });
   await temp.client.from("reviews").insert({ school_id: tempSchool, user_id: tempId, rating: 4, title: "[verify] to be deleted", body: "This review should disappear together with the account that wrote it, as promised.", body_hash: "" });
   const deleted = await temp.client.rpc("delete_my_account");
@@ -272,7 +288,7 @@ async function main() {
   await service.from("reviews").delete().like("title", "[verify]%");
 
   console.log("\nCorrections and school staff");
-  const target = (await service.from("schools").select("id").eq("slug", "tengri-stem-gymnasium").single()).data!.id;
+  const target = (await publishedSchool()).id;
   await service.from("correction_requests").delete().like("message", "[verify]%");
   const correction = (n: number, extra: Partial<{ message: string; email: string; school: string }> = {}) => anon.rpc("submit_correction_request", {
     p_school: extra.school ?? target, p_topic: "contact", p_message: extra.message ?? `[verify] The phone number is wrong, version ${n} ${Date.now()}`, p_source: "", p_name: "", p_email: extra.email ?? "", p_lang: "en",
@@ -410,15 +426,27 @@ async function main() {
   check("a member can delete their own opinion", (deletedOwn.data ?? []).length === 1);
   await service.from("site_testimonials").delete().like("quote->>en", "[verify]%");
 
-  const homeAds = await admin.client.from("advertisements").select("id").eq("placement", "home_grid");
-  check("the home page card placement exists and has sample campaigns", (homeAds.data ?? []).length >= 2);
+  // The sample campaigns are switched off, so the placement and the counter are checked on a
+  // temporary campaign that this script creates and removes again.
+  const { data: tempAd } = await admin.client
+    .from("advertisements")
+    .insert({
+      advertiser_name: "[verify] Temporary advertiser",
+      placement: "home_grid",
+      headline: { en: "[verify] Temporary campaign" },
+      target_url: "https://example.com/verify",
+      is_active: true,
+    })
+    .select("id")
+    .single();
+  check("an administrator can create a home page campaign", Boolean(tempAd?.id));
 
   const adAnon = await anon.from("advertisements").select("id,is_active,starts_at,ends_at");
   check("visitors only see live ads", (adAnon.data ?? []).every((a) => a.is_active && new Date(a.starts_at) <= new Date()));
-  const before = await service.from("advertisements").select("id,impressions").limit(1).single();
-  await anon.rpc("track_ad_event", { p_ad: before.data!.id, p_event: "impression", p_lang: "kg" });
-  const after = await service.from("advertisements").select("impressions").eq("id", before.data!.id).single();
-  check("ad impressions are counted through the RPC", Number(after.data?.impressions) === Number(before.data?.impressions) + 1);
+  await anon.rpc("track_ad_event", { p_ad: tempAd!.id, p_event: "impression", p_lang: "kg" });
+  const after = await service.from("advertisements").select("impressions").eq("id", tempAd!.id).single();
+  check("ad impressions are counted through the RPC", Number(after.data?.impressions) === 1);
+  await service.from("advertisements").delete().eq("id", tempAd!.id);
 
   // cleanup
   await service.from("reviews").delete().eq("school_id", school!.id).eq("user_id", member.id);

@@ -14,7 +14,9 @@ export type TestimonialData = {
 /** Published opinions about EduMaps.kg (members whose text was approved, and guests added by the team). */
 export async function getPublicTestimonials(limit = 30): Promise<TestimonialData[]> {
   const { data } = await createPublicClient().from("public_testimonials").select("id,kind,author_name,author_title,quote,is_demo").limit(limit);
-  const rows = (data ?? []) as unknown as TestimonialData[];
+  // Sample opinions stay out of the public site: the home page shows the section only once a real
+  // member or a guest with recorded permission has been approved.
+  const rows = ((data ?? []) as unknown as TestimonialData[]).filter((row) => !row.is_demo);
   for (let i = rows.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [rows[i], rows[j]] = [rows[j]!, rows[i]!];
