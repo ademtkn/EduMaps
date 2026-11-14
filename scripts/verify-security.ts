@@ -64,6 +64,8 @@ async function main() {
   check("cannot read the users table", (usersAnon ?? []).length === 0);
   const { data: auditRows } = await anon.from("audit_logs").select("id");
   check("audit log returns no rows to visitors", (auditRows ?? []).length === 0);
+  const completeness = await anon.from("admin_school_completeness").select("id").limit(1);
+  check("visitors cannot read the admin completeness view", Boolean(completeness.error));
   const insertAnon = await anon.from("favorites").insert({ user_id: "00000000-0000-0000-0000-000000000000", school_id: schoolsAnon![0]!.id });
   check("cannot write favorites without signing in", Boolean(insertAnon.error));
   const rpcAnon = await anon.rpc("admin_dashboard_stats");

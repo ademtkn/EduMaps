@@ -62,6 +62,17 @@ items below stay on the shelf until that changes.
 - `Pagination` and `Breadcrumbs` take their accessible names from the dictionary instead of the
   hardcoded English "Pagination"/"Breadcrumb" (846 keys × 3 languages).
 
+### 15 Nov 2026 — working through incomplete profiles
+
+- Migration 26 adds `public.admin_school_completeness`, one row per school with `has_cover`,
+  `has_logo`, `has_location`, `has_address`, `has_fee` and `has_contact` plus media/program counts.
+  It is `security_invoker`, granted to `authenticated` only; visitors get "permission denied" and
+  `npm run test:db` now proves it (124 checks).
+- **Admin → Schools** has a second chip row: No photo (619 published), No logo (619), No map pin
+  (546), No fee (650), No address (7), No contact (82). The numbers follow the status tab, so a chip
+  always matches the rows it opens. Each row shows the missing fields as icons.
+- The list reads the view, so it no longer fetches embed columns and it stays correct past 1000 rows.
+
 - All **34 selected institutions** are researched and imported: **33 published**, **Genius.kg Tokmok draft** by explicit owner instruction. An additional historical AIM Balykchy candidate is preserved as a draft, superseded by Birinchi Mugalim in the selected Issyk-Kul batch. Thus import-state has35 historical entries, not35 selected institutions.
 - **87 actual sourced image assets** are stored; **28 selected institutions have a logo and two images**. The six incomplete media sets include the intentionally unverified Genius draft; the five published gaps are Happy Kids, Raduga Tokmok, AALAM Tokmok, Amir Tokmok and Diplomat's missing logo. Missing public contacts/programs/teaching languages remain explicit, not invented. Some genuine school video covers are captioned as such.
 - Happy Kids uses the most documented Bakaev141 kindergarten listing under the owner's branch-selection preference; it is published as unverified, with current operating status and media gaps disclosed. Indigo West's school identity was resolved; incorrect kindergarten contacts were cleared and independently verified as NULL.

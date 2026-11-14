@@ -68,13 +68,15 @@ export function StatusPill({ status }: { status: string }) {
   return <Badge tone={STATUS_TONE[status] ?? "neutral"} className="capitalize">{status}</Badge>;
 }
 
-export function FilterTabs({ items, current, base, param = "status" }: { items: { value: string; label: string; count?: number }[]; current: string; base: string; param?: string }) {
+export function FilterTabs({
+  items, current, base, param = "status", hrefFor,
+}: { items: { value: string; label: string; count?: number }[]; current: string; base: string; param?: string; hrefFor?: (value: string) => string }) {
   return (
     <nav className="mb-4 flex flex-wrap gap-1.5" aria-label="Filter">
       {items.map((item) => (
         <Link
           key={item.value}
-          href={item.value ? `${base}?${param}=${item.value}` : base}
+          href={hrefFor ? hrefFor(item.value) : item.value ? `${base}?${param}=${item.value}` : base}
           aria-current={current === item.value ? "page" : undefined}
           className={cn(
             "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-small font-semibold transition-colors",

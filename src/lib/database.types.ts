@@ -788,6 +788,21 @@ isOneToOne: false
                 }
           }
           Views: {
+            "admin_school_completeness": {
+                  Row: {
+                    "id": string,"slug": string,"name": NonNullable<Json>,"search_text": string,"status": Database["public"]['Enums']["publish_status"],"data_status": string,"school_type": Database["public"]['Enums']["school_type"],"institution_kind": string,"updated_at": string,"rating_avg": number,"rating_count": number,"view_count": number,"city_name": Json | null,"has_cover": boolean,"has_logo": boolean,"has_location": boolean,"has_address": boolean,"has_fee": boolean,"has_contact": boolean,"media_count": number,"program_count": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                           "id"?: string | null,"slug"?: string | null,"name"?: Json | null,"status"?: string | null,"data_status"?: string | null,"school_type"?: string | null,"institution_kind"?: string | null,"updated_at"?: string | null,"city_name"?: Json | null,"has_cover"?: boolean | null,"has_logo"?: boolean | null,"has_location"?: boolean | null,"has_address"?: boolean | null,"has_fee"?: boolean | null,"has_contact"?: boolean | null,"media_count"?: number | null,"program_count"?: number | null
+                         }
+                        Update: {
+                           "id"?: string | null,"slug"?: string | null,"name"?: Json | null,"status"?: string | null,"data_status"?: string | null,"school_type"?: string | null,"institution_kind"?: string | null,"updated_at"?: string | null,"city_name"?: Json | null,"has_cover"?: boolean | null,"has_logo"?: boolean | null,"has_location"?: boolean | null,"has_address"?: boolean | null,"has_fee"?: boolean | null,"has_contact"?: boolean | null,"media_count"?: number | null,"program_count"?: number | null
+                         }
+                        Relationships: [
+                    
+                  ]
+                },
             "public_testimonials": {
                   Row: {
                     "author_name": string,"author_title": string | null,"created_at": string,"id": string,"is_demo": boolean,"kind": string,"quote": NonNullable<Json>
