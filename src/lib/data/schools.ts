@@ -3,11 +3,21 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { BISHKEK_DISTRICTS } from "@/lib/constants";
 import { distanceMeters, type Coords } from "@/lib/geo";
 import type { Lang } from "@/lib/i18n/config";
+import type { I18nText } from "@/lib/i18n/localized";
 import type { MapSchool, ReviewData, SchoolCardData, SchoolDetail } from "./types";
 
 const CARD_SELECT =
   "id,slug,name,tagline,logo_url,cover_url,rating_avg,rating_count,school_type,institution_kind,education_systems,has_transportation,has_boarding,has_sports,tuition_min,tuition_max,fee_min,fee_max,fee_period,fee_billing_months,opening_time,closing_time,working_days,grade_from,grade_to,updated_at,data_status," +
-  "cities!inner(slug,name,provinces!inner(slug,name)),school_languages(language_code,is_primary)";
+  "cities!inner(slug,name,provinces!inner(slug,name)),school_languages(language_code,is_primary),school_locations(address)";
+
+type CardRow = SchoolCardData & { school_locations?: { address: I18nText } | { address: I18nText }[] | null };
+
+/** Flattens the one-to-one location embed into a plain address on the card. */
+function toCard(row: CardRow): SchoolCardData {
+  const location = Array.isArray(row.school_locations) ? row.school_locations[0] : row.school_locations;
+  const { school_locations: _location, ...card } = row;
+  return { ...card, address: location?.address ?? null };
+}
 
 export const PAGE_SIZE = 12;
 export const SCHOOL_SORTS = ["rating", "reviews", "name", "updated", "nearest"] as const;
@@ -99,21 +109,21 @@ export async function listSchools(filters: SchoolFilters): Promise<{ items: Scho
 
   const { data, count, error } = await query;
   if (error) throw new Error(`listSchools failed: ${error.message}`);
-  let items = (data ?? []) as unknown as (SchoolCardData & { school_locations?: { lat: number | null; lng: number | null } | { lat: number | null; lng: number | null }[] | null })[];
+  let items = (data ?? []) as unknown as (SchoolCardData & { school_locations?: { lat: number | null; lng: number | null; address: I18nText } | { lat: number | null; lng: number | null; address: I18nText }[] | null })[];
   const near = filters.near;
   if (near) {
     items = items.map(({ school_locations, ...school }) => {
       const loc = Array.isArray(school_locations) ? school_locations[0] : school_locations;
       const distance = loc && loc.lat != null && loc.lng != null ? distanceMeters(near, { lat: Number(loc.lat), lng: Number(loc.lng) }) / 1000 : null;
-      return { ...school, distance_km: distance === null ? null : Math.round(distance * 10) / 10 };
+      return { ...school, address: loc?.address ?? null, distance_km: distance === null ? null : Math.round(distance * 10) / 10 };
     });
     if (nearest) {
       // schools without a map location go last, best rated first
       items.sort((a, b) => (a.distance_km ?? Infinity) - (b.distance_km ?? Infinity) || b.rating_avg - a.rating_avg);
-      return { items: items.slice((page - 1) * pageSize, page * pageSize), total: items.length };
+      return { items: items.slice((page - 1) * pageSize, page * pageSize).map((row) => toCard(row as CardRow)), total: items.length };
     }
   }
-  return { items, total: count ?? 0 };
+  return { items: items.map((row) => toCard(row as CardRow)), total: count ?? 0 };
 }
 
 export async function getSchoolBySlug(slug: string): Promise<SchoolDetail | null> {
@@ -178,7 +188,7 @@ export async function getRelatedSchools(school: SchoolDetail, limit = 4): Promis
     .limit(limit * 3);
   if (cityRow) query = query.eq("city_id", cityRow.city_id);
   const { data } = await query;
-  const pool = (data ?? []) as unknown as SchoolCardData[];
+  const pool = ((data ?? []) as unknown as CardRow[]).map(toCard);
   // Prefer schools sharing an education system, then fill with the rest of the city.
   const shared = pool.filter((s) => s.education_systems.some((e) => school.education_systems.includes(e)));
   const rest = pool.filter((s) => !shared.includes(s));
@@ -214,7 +224,7 @@ export async function getRandomSchools(count = 6, options: { fresh?: boolean } =
   const chosen = pool.slice(0, count);
   if (chosen.length === 0) return [];
   const { data } = await db.from("schools").select(CARD_SELECT).in("id", chosen).eq("status", "published");
-  const rows = (data ?? []) as unknown as SchoolCardData[];
+  const rows = ((data ?? []) as unknown as CardRow[]).map(toCard);
   return chosen.flatMap((id) => rows.filter((r) => r.id === id));
 }
 

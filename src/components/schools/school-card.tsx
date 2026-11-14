@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { MediaImage } from "@/components/ui/media-image";
 import { GradeBadge } from "@/components/ui/grade-badge";
 import { FavoriteButton } from "./favorite-button";
+import { SchoolCoverArt } from "./school-cover-art";
 
 export function gradeRange(dict: Dictionary, from: number | null, to: number | null) {
   if (from == null || to == null) return dict.school.infoPending;
@@ -37,6 +38,7 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
   const langNames = dict.schools.languageNames as Record<string, string>;
   const systems = dict.schools.systems as Record<string, string>;
   const languages = [...school.school_languages].sort((a, b) => Number(b.is_primary) - Number(a.is_primary));
+  const address = school.address ? tr(school.address, lang).trim() : "";
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-card border border-ink-200 bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-lift">
@@ -50,7 +52,9 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
             priority={priority}
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
-        ) : null}
+        ) : (
+          <SchoolCoverArt kind={school.institution_kind} slug={school.slug} />
+        )}
         <div className="absolute left-3 top-3 flex items-center gap-2">
           {rank && school.rating_count > 0 ? <span className="rounded-lg bg-brand-900/90 px-2.5 py-1 text-small font-extrabold text-white shadow-sm backdrop-blur">{fmt(dict.rankings.rank, { n: rank })}</span> : null}
           <Badge tone="outline" className="border-white/0 bg-white/95 shadow-sm">{types[school.school_type]}</Badge>
@@ -98,6 +102,10 @@ export function SchoolCard({ school, lang, dict, priority = false, rank }: { sch
             <span className="inline-flex items-center gap-1"><GraduationCap className="size-3.5" />{gradeRange(dict, school.grade_from, school.grade_to)}</span>
           ) : null}
         </p>
+
+        {/* The street line is what a parent looks for first; it also keeps the card from looking
+            empty while most listings still have no photograph. */}
+        {address ? <p className="mt-1 line-clamp-1 text-caption text-ink-500">{address}</p> : null}
 
         {formatSchedule(school, lang) ? (
           <p className="mt-1.5 flex items-center gap-1 text-small text-ink-600" title={dict.school.schoolDay}>

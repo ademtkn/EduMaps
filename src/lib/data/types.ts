@@ -35,6 +35,8 @@ export type SchoolCardData = {
   school_languages: { language_code: string; is_primary: boolean }[];
   /** Kilometres from the visitor, only when the directory was opened with "near me". */
   distance_km?: number | null;
+  /** Street address, when the import or the team recorded one. */
+  address?: I18nText | null;
 };
 
 export type SchoolDetail = SchoolCardData & {

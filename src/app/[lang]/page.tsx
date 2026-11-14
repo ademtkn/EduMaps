@@ -10,7 +10,6 @@ import { RotatingVoices } from "@/components/home/rotating-voices";
 import { TrustSection } from "@/components/home/trust-section";
 import { SearchBar } from "@/components/schools/search-bar";
 import { Button } from "@/components/ui/button";
-import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section";
 import { listArticles } from "@/lib/data/articles";
 import { listPosts } from "@/lib/data/community";
@@ -201,16 +200,16 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       <section className="container-page pt-10 sm:pt-16">
         <SectionHeading title={dict.home.whyTitle} />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {why.map((item, i) => (
-            <Reveal key={item.title} delay={i * 0.06}>
-              <div className="h-full rounded-card border border-ink-200 bg-white p-6 shadow-card">
-                <span className="mb-4 flex size-11 items-center justify-center rounded-xl bg-leaf-50 text-leaf-700">
-                  <item.icon className="size-5.5" />
-                </span>
-                <h3 className="text-h3 font-semibold">{item.title}</h3>
-                <p className="mt-2 text-small text-ink-600">{item.text}</p>
-              </div>
-            </Reveal>
+          {/* No scroll-triggered animation here: it hid these cards until JavaScript ran, and the
+              four blocks are the only reason framer-motion was in the bundle. */}
+          {why.map((item) => (
+            <div key={item.title} className="h-full rounded-card border border-ink-200 bg-white p-6 shadow-card">
+              <span className="mb-4 flex size-11 items-center justify-center rounded-xl bg-leaf-50 text-leaf-700">
+                <item.icon className="size-5.5" />
+              </span>
+              <h3 className="text-h3 font-semibold">{item.title}</h3>
+              <p className="mt-2 text-small text-ink-600">{item.text}</p>
+            </div>
           ))}
         </div>
       </section>
