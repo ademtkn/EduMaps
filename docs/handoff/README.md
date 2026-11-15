@@ -108,6 +108,23 @@ items below stay on the shelf until that changes.
 - Disk note: the machine is at 98 % (≈13 GB free); `.next/cache` was cleared and the npm cache could
   not be cleared without sudo. Keep an eye on it.
 
+### 15 Nov 2026 — advertising, a live home section, pictures from school websites
+
+- **Advertisers** (inserted through SQL, so `revalidateTag("public-data")` was not called; the fetch
+  cache keeps a page for 300 s): Deco.kg and Oreke Tattuu on `home_grid`, Moraled and Linooks on
+  `banner`, all trilingual, no image yet. Two campaigns per placement rotate randomly; verified over
+  twelve requests (both brands appeared). The copy is deliberately neutral (brand + link) because the
+  only information available was the URL — replace it in **Admin → Advertisements**.
+- **The "Explore rankings" block is gone.** The home page now shows *Recently added*: the two newest
+  published schools, kindergartens, colleges and madrasas (one query per kind, because the bulk
+  import gave hundreds of rows the same `created_at`), each with a link to the filtered list, plus the
+  latest reviews when there are any. EduMaps does not rank schools, so the page no longer implies it.
+- **Pictures from the schools' own websites** (`scripts/fetch-school-images.ts`, dry run by default):
+  `og:image` becomes the cover, an `<img>` whose address or alt text says "logo" becomes the logo,
+  with minimum sizes (600×300 and 96×48) and duplicate URLs skipped. Applied: **11 covers + 25 logos**
+  (published schools with a cover 32 → 43, with a logo 32 → 57). Instagram profile pages are behind a
+  login wall and cannot be read by a script — those schools still need the bulk photo uploader.
+
 - All **34 selected institutions** are researched and imported: **33 published**, **Genius.kg Tokmok draft** by explicit owner instruction. An additional historical AIM Balykchy candidate is preserved as a draft, superseded by Birinchi Mugalim in the selected Issyk-Kul batch. Thus import-state has35 historical entries, not35 selected institutions.
 - **87 actual sourced image assets** are stored; **28 selected institutions have a logo and two images**. The six incomplete media sets include the intentionally unverified Genius draft; the five published gaps are Happy Kids, Raduga Tokmok, AALAM Tokmok, Amir Tokmok and Diplomat's missing logo. Missing public contacts/programs/teaching languages remain explicit, not invented. Some genuine school video covers are captioned as such.
 - Happy Kids uses the most documented Bakaev141 kindergarten listing under the owner's branch-selection preference; it is published as unverified, with current operating status and media gaps disclosed. Indigo West's school identity was resolved; incorrect kindergarten contacts were cleared and independently verified as NULL.

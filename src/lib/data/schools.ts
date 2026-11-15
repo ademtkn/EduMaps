@@ -271,6 +271,79 @@ export async function getMapSchools(): Promise<MapSchool[]> {
  * schools that are no longer published are left out (they belong to archived sample profiles), and
  * only cities that actually have a published school are counted.
  */
+export type NewSchoolItem = {
+  slug: string;
+  name: I18nText;
+  city: I18nText;
+  addedAt: string;
+};
+
+export type KindKey = "school" | "kindergarten" | "college" | "madrasa";
+
+/**
+ * The profiles that were added last, grouped by institution kind.
+ *
+ * Replaces the old "rankings" block: EduMaps does not pick a best school, so the home page shows
+ * what is genuinely new instead of implying a ranking. The list refreshes with the ISR window.
+ */
+export async function getNewestSchools(): Promise<Record<KindKey, NewSchoolItem[]>> {
+  const kinds = ["school", "kindergarten", "college", "madrasa"] as const;
+  // One query per kind: the bulk import gave hundreds of schools the same created_at, so a single
+  // "newest 240" window would be an arbitrary slice and could leave a kind empty.
+  const results = await Promise.all(
+    kinds.map((kind) =>
+      createPublicClient()
+        .from("schools")
+        .select("slug,name,created_at,cities!inner(name)")
+        .eq("status", "published")
+        .eq("institution_kind", kind)
+        .order("created_at", { ascending: false })
+        .order("slug", { ascending: true })
+        .limit(2)
+    )
+  );
+
+  const grouped: Record<KindKey, NewSchoolItem[]> = { school: [], kindergarten: [], college: [], madrasa: [] };
+  kinds.forEach((kind, index) => {
+    const rows = (results[index]?.data ?? []) as unknown as { slug: string; name: I18nText; created_at: string; cities: { name: I18nText } }[];
+    grouped[kind] = rows.map((row) => ({ slug: row.slug, name: row.name, city: row.cities?.name ?? null, addedAt: row.created_at }));
+  });
+  return grouped;
+}
+
+export type LatestReviewItem = {
+  id: string;
+  rating: number;
+  title: string;
+  createdAt: string;
+  schoolSlug: string;
+  schoolName: I18nText;
+  authorName: string;
+};
+
+/** The newest published reviews, with the school they belong to. */
+export async function getLatestReviews(limit = 2): Promise<LatestReviewItem[]> {
+  const { data } = await createPublicClient()
+    .from("reviews")
+    .select("id,rating,title,created_at,schools!inner(slug,name,status),profiles(display_name)")
+    .eq("status", "published")
+    .eq("schools.status", "published")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return ((data ?? []) as unknown as {
+    id: string; rating: number; title: string; created_at: string;
+    schools: { slug: string; name: I18nText }; profiles: { display_name: string | null } | null;
+  }[]).map((row) => ({
+    id: row.id,
+    rating: row.rating,
+    title: row.title,
+    createdAt: row.created_at,
+    schoolSlug: row.schools.slug,
+    schoolName: row.schools.name,
+    authorName: row.profiles?.display_name ?? "",
+  }));
+}
+
 export async function getSiteStats() {
   const db = createPublicClient();
   const [schools, reviews, articles, cityRows] = await Promise.all([

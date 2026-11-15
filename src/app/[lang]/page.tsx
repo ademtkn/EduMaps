@@ -1,4 +1,4 @@
-import { ArrowRight, Award, Building2, Bed, Globe2, Landmark, Trophy, MapPinned, MessagesSquare, ShieldCheck, Languages, Scale } from "lucide-react";
+import { ArrowRight, Blocks, BookOpen, GraduationCap, MapPinned, MessagesSquare, School as SchoolIcon, ShieldCheck, Languages, Scale } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -10,16 +10,17 @@ import { RotatingVoices } from "@/components/home/rotating-voices";
 import { TrustSection } from "@/components/home/trust-section";
 import { SearchBar } from "@/components/schools/search-bar";
 import { Button } from "@/components/ui/button";
+import { Stars } from "@/components/ui/rating";
 import { SectionHeading } from "@/components/ui/section";
 import { listArticles } from "@/lib/data/articles";
 import { listPosts } from "@/lib/data/community";
 import { listCities, schoolCountsByCity } from "@/lib/data/geo";
-import { getRandomSchools, getSiteStats } from "@/lib/data/schools";
+import { getLatestReviews, getNewestSchools, getRandomSchools, getSiteStats } from "@/lib/data/schools";
 import { getPublicTestimonials } from "@/lib/data/testimonials";
 import { getAds } from "@/lib/data/ads";
 import { isLang, localizedPath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/fmt";
-import { formatNumber } from "@/lib/i18n/format";
+import { formatDate, formatNumber } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/get-dictionary";
 import { tr } from "@/lib/i18n/localized";
 import { buildMetadata } from "@/lib/seo/metadata";
@@ -42,7 +43,7 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
   const { lang } = await params;
   if (!isLang(lang)) notFound();
 
-  const [dict, cities, counts, featured, [homeAd], voices, stats, articles, posts] = await Promise.all([
+  const [dict, cities, counts, featured, [homeAd], voices, stats, newest, latestReviews, articles, posts] = await Promise.all([
     getDictionary(lang),
     listCities(),
     schoolCountsByCity(),
@@ -50,6 +51,8 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
     getAds("home_grid", lang, 1),
     getPublicTestimonials(),
     getSiteStats(),
+    getNewestSchools(),
+    getLatestReviews(2),
     listArticles({ pageSize: 3, featuredFirst: true }),
     listPosts({ pageSize: 3 }),
   ]);
@@ -121,23 +124,51 @@ export default async function HomePage({ params }: { params: Promise<{ lang: str
       </section>
 
       <section className="container-page pt-10 sm:pt-16">
-        <SectionHeading title={dict.rankings.title} description={dict.rankings.description} />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        <SectionHeading title={dict.home.whatsNewTitle} description={dict.home.whatsNewDescription} />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {([
-            [Award, dict.rankings.overall, "/schools"],
-            [Building2, dict.rankings.private, "/schools?type=private"],
-            [Globe2, dict.rankings.international, "/schools?type=international"],
-            [Landmark, dict.rankings.public, "/schools?type=public"],
-            [Bed, dict.rankings.boarding, "/schools?boarding=1"],
-            [Trophy, dict.rankings.sports, "/schools?sports=1"],
-          ] as const).map(([Icon, label, href]) => (
-            <Link key={label} href={localizedPath(lang, href)} className="group flex flex-col gap-3 rounded-card border border-ink-200 bg-white p-4 shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-leaf-300 hover:shadow-lift">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-leaf-50 text-leaf-700 transition-colors group-hover:bg-leaf-600 group-hover:text-white"><Icon className="size-5" /></span>
-              <span className="text-small font-semibold leading-snug text-ink-900">{label}</span>
-            </Link>
+            ["school", SchoolIcon],
+            ["kindergarten", Blocks],
+            ["college", GraduationCap],
+            ["madrasa", BookOpen],
+          ] as const).map(([kind, Icon]) => (
+            <div key={kind} className="flex flex-col rounded-card border border-ink-200 bg-white p-5 shadow-card">
+              <p className="flex items-center gap-2 text-small font-semibold text-ink-900">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-leaf-50 text-leaf-700"><Icon className="size-4.5" /></span>
+                {dict.schools.kinds[kind]}
+              </p>
+              <ul className="mt-3 flex-1 space-y-2.5">
+                {newest[kind].length === 0 ? <li className="text-small text-ink-500">—</li> : null}
+                {newest[kind].map((item) => (
+                  <li key={item.slug}>
+                    <Link href={localizedPath(lang, `/schools/${item.slug}`)} className="text-small font-medium text-brand-700 hover:underline">{tr(item.name, lang)}</Link>
+                    <p className="text-caption text-ink-500">{tr(item.city, lang)} · {formatDate(item.addedAt, lang)}</p>
+                  </li>
+                ))}
+              </ul>
+              <Link href={localizedPath(lang, `/schools?kind=${kind}&sort=updated`)} className="mt-4 text-small font-semibold text-ink-600 hover:text-brand-700">
+                {dict.common.viewAll} →
+              </Link>
+            </div>
           ))}
         </div>
-      </section>
+
+        {latestReviews.length > 0 ? (
+          <div className="mt-5 rounded-card border border-ink-200 bg-white p-5 shadow-card">
+            <p className="text-small font-semibold text-ink-900">{dict.home.latestReviews}</p>
+            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+              {latestReviews.map((review) => (
+                <li key={review.id} className="rounded-control bg-ink-50 p-3">
+                  <div className="flex items-center gap-2">
+                    <Stars value={review.rating} size="sm" />
+                    <Link href={localizedPath(lang, `/schools/${review.schoolSlug}`)} className="text-small font-medium text-brand-700 hover:underline">{tr(review.schoolName, lang)}</Link>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-small text-ink-700">{review.title}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}</section>
 
       {featured.length > 0 ? (
       <section className="container-page pt-10 sm:pt-16">
