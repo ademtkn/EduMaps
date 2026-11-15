@@ -2,7 +2,7 @@
 
 import {
   BarChart3, BookOpen, Flag, LineChart, Quote, Folder, Globe, Image as ImageIcon, Inbox, LayoutDashboard, Megaphone, Menu, MessagesSquare,
-  MapPin, ScrollText, School, Send, SlidersHorizontal, Star, Users, Video, X, type LucideIcon,
+  ImagePlus, MapPin, ScrollText, School, Send, SlidersHorizontal, Star, Users, Video, X, type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,6 +20,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
   { title: "Content", items: [
     { href: "/admin/schools", label: "Schools", icon: School, roles: ["admin"] },
     { href: "/admin/map-pins", label: "Map pins", icon: MapPin, roles: ["admin"] },
+    { href: "/admin/photos", label: "Bulk photos", icon: ImagePlus, roles: ["admin"] },
     { href: "/admin/articles", label: "Articles", icon: BookOpen, roles: ["admin"] },
     { href: "/admin/videos", label: "Videos", icon: Video, roles: ["admin"] },
     { href: "/admin/categories", label: "Categories", icon: Folder, roles: ["admin"] },

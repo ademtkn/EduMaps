@@ -93,6 +93,21 @@ items below stay on the shelf until that changes.
 - The completeness view (migration 26) also exposes `address`, `google_maps_url` and `twogis_url`.
 - `npm run test:db` now proves a signed-in member cannot move a school on the map (125 checks).
 
+### 15 Nov 2026 — bulk photo importer
+
+- **Admin → Bulk photos** (`/admin/photos`): drop a folder of images named
+  `<slug>-logo.jpg`, `<slug>-1.jpg` (cover), `<slug>-2.jpg`… (gallery). Every file is matched against
+  the school slugs and listed with its target before anything is uploaded; unmatched names are shown
+  as ignored and are never sent.
+- `importSchoolPhotoAction` reuses the media pipeline (magic-byte check, 1600 px, WebP, metadata
+  stripped) through the shared `storeImage` helper, then writes `logo_url`, `cover_url` or a
+  `school_media` row. A failed link removes the stored file again.
+- Tested end to end with a real image on the draft school `genius-kg-tokmok`: 13 KB PNG became a
+  2.8 KB WebP, the gallery row and the media-library entry appeared, and the test artefacts were
+  removed afterwards.
+- Disk note: the machine is at 98 % (≈13 GB free); `.next/cache` was cleared and the npm cache could
+  not be cleared without sudo. Keep an eye on it.
+
 - All **34 selected institutions** are researched and imported: **33 published**, **Genius.kg Tokmok draft** by explicit owner instruction. An additional historical AIM Balykchy candidate is preserved as a draft, superseded by Birinchi Mugalim in the selected Issyk-Kul batch. Thus import-state has35 historical entries, not35 selected institutions.
 - **87 actual sourced image assets** are stored; **28 selected institutions have a logo and two images**. The six incomplete media sets include the intentionally unverified Genius draft; the five published gaps are Happy Kids, Raduga Tokmok, AALAM Tokmok, Amir Tokmok and Diplomat's missing logo. Missing public contacts/programs/teaching languages remain explicit, not invented. Some genuine school video covers are captioned as such.
 - Happy Kids uses the most documented Bakaev141 kindergarten listing under the owner's branch-selection preference; it is published as unverified, with current operating status and media gaps disclosed. Indigo West's school identity was resolved; incorrect kindergarten contacts were cleared and independently verified as NULL.

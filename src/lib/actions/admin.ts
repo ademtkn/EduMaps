@@ -395,13 +395,15 @@ const SIGNATURES: { mime: string; ext: string; test: (b: Uint8Array) => boolean 
   { mime: "image/avif", ext: "avif", test: (b) => b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70 },
 ];
 
-/** Uploads an image to the public media bucket after checking size and magic bytes (the declared MIME type is not trusted). */
-export async function uploadMediaAction(formData: FormData): Promise<AdminResult<{ url: string; id: string; inputBytes: number; outputBytes: number }>> {
-  const ctx = await requireRole(["admin"]);
-  if (!ctx) return fail("Not authorized.");
-  if (!rateLimit(`upload:${ctx.user.id}`, 60, 10 * 60_000).ok) return fail("Too many uploads. Please wait a moment.");
+type StoredImage = { url: string; path: string; id: string; inputBytes: number; outputBytes: number };
 
-  const file = formData.get("file");
+/**
+ * Checks, shrinks, converts and stores one image, then records it in the media library.
+ * Shared by the media library uploader and the bulk photo importer.
+ */
+type AdminContext = NonNullable<Awaited<ReturnType<typeof requireRole>>>;
+
+async function storeImage(ctx: AdminContext, file: unknown, alt: string): Promise<AdminResult<StoredImage>> {
   if (!(file instanceof File) || file.size === 0) return fail("Choose an image file.");
   if (file.size > 8 * 1024 * 1024) return fail("Images must be 8 MB or smaller.");
 
@@ -423,18 +425,69 @@ export async function uploadMediaAction(formData: FormData): Promise<AdminResult
   if (error) return fail(error.message);
 
   const publicUrl = ctx.supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
-  const altText = sanitizeLine(String(formData.get("alt") ?? "")).slice(0, 200);
   const { data, error: insertError } = await ctx.supabase
     .from("media_files")
-    .insert({ bucket: "media", path, public_url: publicUrl, mime_type: type.mime, size_bytes: image.outputBytes, alt: altText ? { en: altText } : null, uploaded_by: ctx.user.id })
+    .insert({ bucket: "media", path, public_url: publicUrl, mime_type: type.mime, size_bytes: image.outputBytes, alt: alt ? { en: alt } : null, uploaded_by: ctx.user.id })
     .select("id")
     .single();
   if (insertError) {
     await ctx.supabase.storage.from("media").remove([path]);
     return dbFail(insertError);
   }
+  return { ok: true, data: { url: publicUrl, path, id: data.id, inputBytes: image.inputBytes, outputBytes: image.outputBytes } };
+}
+
+/** Uploads an image to the public media bucket after checking size and magic bytes (the declared MIME type is not trusted). */
+export async function uploadMediaAction(formData: FormData): Promise<AdminResult<{ url: string; id: string; inputBytes: number; outputBytes: number }>> {
+  const ctx = await requireRole(["admin"]);
+  if (!ctx) return fail("Not authorized.");
+  if (!rateLimit(`upload:${ctx.user.id}`, 60, 10 * 60_000).ok) return fail("Too many uploads. Please wait a moment.");
+
+  const stored = await storeImage(ctx, formData.get("file"), sanitizeLine(String(formData.get("alt") ?? "")).slice(0, 200));
+  if (!stored.ok) return stored;
   revalidatePath("/admin/media");
-  return { ok: true, data: { url: publicUrl, id: data.id, inputBytes: image.inputBytes, outputBytes: image.outputBytes } };
+  return { ok: true, data: stored.data };
+}
+
+/**
+ * Adds one photo to one school, used by the bulk importer (Admin → Bulk photos).
+ *
+ * The file name carries the target: `<slug>-logo.png`, `<slug>-1.jpg` (cover) and `<slug>-2.jpg`,
+ * `<slug>-3.jpg`… (gallery). The image is optimised exactly like a normal upload.
+ */
+export async function importSchoolPhotoAction(formData: FormData): Promise<AdminResult<{ url: string; school: string; role: string }>> {
+  const ctx = await requireRole(["admin"]);
+  if (!ctx) return fail("Not authorized.");
+  if (!rateLimit(`photo-import:${ctx.user.id}`, 400, 10 * 60_000).ok) return fail("Too many uploads in a row. Wait a moment.");
+
+  const slug = sanitizeLine(String(formData.get("slug") ?? "")).slice(0, 160);
+  const role = String(formData.get("role") ?? "gallery");
+  const order = Math.min(40, Math.max(0, Number(formData.get("order") ?? 0) || 0));
+  if (!slug) return fail("Missing school slug.");
+  if (!["logo", "cover", "gallery"].includes(role)) return fail("Unknown photo role.");
+
+  const { data: school } = await ctx.supabase.from("schools").select("id,status").eq("slug", slug).maybeSingle();
+  if (!school) return fail(`No school has the slug "${slug}".`);
+
+  const stored = await storeImage(ctx, formData.get("file"), "");
+  if (!stored.ok) return stored;
+
+  const image = stored.data;
+  if (!image) return fail("The image could not be stored.");
+  const { error } = role === "logo"
+    ? await ctx.supabase.from("schools").update({ logo_url: image.url }).eq("id", school.id)
+    : role === "cover"
+      ? await ctx.supabase.from("schools").update({ cover_url: image.url }).eq("id", school.id)
+      : await ctx.supabase.from("school_media").insert({ school_id: school.id, kind: "image", url: image.url, storage_path: image.path, sort_order: order });
+  if (error) {
+    await ctx.supabase.storage.from("media").remove([image.path]);
+    return dbFail(error);
+  }
+
+  refreshPublic();
+  revalidatePath("/admin/schools");
+  revalidatePath("/admin/photos");
+  return { ok: true, data: { url: image.url, school: slug, role } };
 }
 
 export async function deleteMediaAction(id: string): Promise<AdminResult> {
